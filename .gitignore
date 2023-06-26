@@ -1,4 +1,4 @@
-
+/pkg
 /server/config.yml
-
+/server/vendor
 /.vscode
