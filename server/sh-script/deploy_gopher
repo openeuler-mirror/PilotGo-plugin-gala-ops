@@ -1,0 +1,53 @@
+#!/bin/bash
+
+
+KAFKA_PORT=9092
+PROMETHEUS_PORT=9090
+ES_PORT=9200
+ARANGODB_PORT=8529
+PYROSCOPE_PORT=4040
+
+KAFKA_ADDR="localhost:${KAFKA_PORT}"
+PROMETHEUS_ADDR="localhost:${PROMETHEUS_PORT}"
+ES_ADDR="localhost:${ES_PORT}"
+ARANGODB_ADDR="localhost:${ARANGODB_PORT}"
+PYROSCOPE_ADDR="localhost:${PYROSCOPE_PORT}"
+
+GOPHER_CONF='/opt/gala-gopher/gala-gopher.conf'
+GOPHER_APP_CONF='/opt/gala-gopher/gala-gopher-app.conf'
+PG_STAT_CONF='/opt/gala-gopher/extend_probes/pg_stat_probe.conf'
+STACKPROBE_CONF='/opt/gala-gopher/extend_probes/stackprobe.conf'
+
+yum install -y gala-gopher  
+
+if [ ! -f "${GOPHER_CONF}" ] ; then
+    GOPHER_CONF='/etc/gala-gopher/gala-gopher.conf'
+    GOPHER_APP_CONF='/etc/gala-gopher/gala-gopher-app.conf'
+    PG_STAT_CONF='/etc/gala-gopher/extend_probes/pg_stat_probe.conf'
+    STACKPROBE_CONF='/etc/gala-gopher/extend_probes/stackprobe.conf'
+fi
+
+# gala-gopher.conf
+sed -i "s#kafka_broker =.*#kafka_broker = \"${KAFKA_ADDR}\"#g" ${GOPHER_CONF}
+
+# pg_stat_probe.conf
+line=$(grep -n '  -' ${PG_STAT_CONF} | head -1 | cut -f1 -d':')
+sed -i "$((line+1)),\$d" ${PG_STAT_CONF}
+cat >> ${PG_STAT_CONF} << EOF
+ip: "172.11.0.101"
+port: "5432"
+dbname: "postgres"
+user: "opengauss_exporter"
+password: "opengauss_exporter123"
+EOF
+
+# gala-gopher-app.conf
+if ! grep -q 'comm = "gaussdb"' ${GOPHER_APP_CONF} ; then
+    sed -i "/^(/a\ \t{\n\t\tcomm = \"gaussdb\",\n\t\tcmdline = \"\";\n\t},"  ${GOPHER_APP_CONF}
+fi
+
+# stackprobe.conf
+sed -i "/name = \"stackprobe\"/{n;n;n;s/switch =.*/switch = \"on\"/g;}" ${GOPHER_CONF}
+sed -i "s/pyroscope_server.*/pyroscope_server = \"${PYROSCOPE_ADDR}\";/g" ${STACKPROBE_CONF}
+
+systemctl restart gala-gopher 

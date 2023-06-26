@@ -1,0 +1,67 @@
+{
+    "id": 7,
+    "gridPos": {
+      "h": 5,
+      "w": 11,
+      "x": 0,
+      "y": 6
+    },
+    "type": "bargauge",
+    "title": "CPU使用率",
+    "datasource": {
+      "type": "prometheus",
+      "uid": "r3WqfVA4z"
+    },
+    "pluginVersion": "9.3.14",
+    "fieldConfig": {
+      "defaults": {
+        "mappings": [],
+        "thresholds": {
+          "mode": "absolute",
+          "steps": [
+            {
+              "color": "green",
+              "value": null
+            },
+            {
+              "color": "red",
+              "value": 80
+            }
+          ]
+        },
+        "color": {
+          "mode": "thresholds"
+        },
+        "decimals": 2,
+        "unit": "percent"
+      },
+      "overrides": []
+    },
+    "options": {
+      "reduceOptions": {
+        "values": false,
+        "calcs": [
+          "lastNotNull"
+        ],
+        "fields": ""
+      },
+      "orientation": "horizontal",
+      "displayMode": "lcd",
+      "showUnfilled": true,
+      "minVizWidth": 0,
+      "minVizHeight": 10
+    },
+    "targets": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "r3WqfVA4z"
+        },
+        "editorMode": "builder",
+        "expr": "avg by(job) (gala_gopher_cpu_total_used_per{job=~\"$instance\"})",
+        "legendFormat": "__auto",
+        "range": true,
+        "refId": "A"
+      }
+    ]
+  }

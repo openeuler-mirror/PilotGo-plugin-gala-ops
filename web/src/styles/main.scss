@@ -1,0 +1,181 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app,
+.wrapper {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+html {
+  // min-width: 1366px;
+}
+
+body {
+  // font-family: 'PingFang SC', "Helvetica Neue", Helvetica, "microsoft yahei", arial, STHeiTi, sans-serif;
+  // font-family: "Arial","Microsoft YaHei","黑体","宋体",sans-serif;
+  // font-family: Helvetica, 'Hiragino Sans GB', 'Microsoft Yahei', '微软雅黑', Arial, sans-serif;
+  
+font-family: NotoSansCJKsc-Medium, NotoSansCJKsc; 
+}
+
+a {
+  text-decoration: none
+}
+/* 滚动条凹槽的颜色，还可以设置边框属性 */
+*::-webkit-scrollbar-track-piece {
+  background-color: #f8f8f8;
+  -webkit-border-radius: 2em;
+  -moz-border-radius: 2em;
+  border-radius: 2em;
+}
+
+/* 滚动条的宽度 */
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+/* 滚动条的设置 */
+*::-webkit-scrollbar-thumb {
+  background-color: #ddd;
+  -webkit-border-radius: 2em;
+  -moz-border-radius: 2em;
+  border-radius: 2em;
+  background-clip: padding-box;
+}
+
+/* 滚动条鼠标移上去 */
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #bbb;
+}
+
+// el-table
+/*最外层透明*/
+ .el-table,
+.el-table__expanded-cell {
+  background-color: transparent !important;
+}
+.el-table__inner-wrapper::before,
+.el-table--border .el-table__inner-wrapper::after {
+  height: 0px;
+}
+.el-table--border::after,
+.el-table__border-left-patch {
+  width: 0px;
+}
+// 头部设置
+.el-table thead {
+  background-color: #f9f9f9;//rgb(32, 34, 38);
+  color: #222;
+}
+/* 表格内背景颜色 */
+.el-table th {
+  background-color: #FAFAFA !important;
+  text-align: center !important; // 文字居中
+}
+.el-table td {
+  text-align: center !important;
+  color: #222;
+}
+
+/*去除底部灰条.el-table::before*/
+.el-table::before {
+  display: none;
+}
+
+
+// 分页显示
+.el-pagination {
+  width: 100%;
+  justify-content: flex-end;
+  --el-pagination-font-size: 13px;
+}
+.el-pagination__sizes {
+      flex-grow: 1;
+    text-align: left;
+}
+.el-pagination.is-background .btn-prev,
+.el-pagination.is-background .btn-next,
+.el-pagination.is-background .el-pager li {
+  background-color: #fff !important;
+  border:1px solid #D9D9D9;
+}
+.el-pagination.is-background .btn-next.is-active, .el-pagination.is-background .btn-prev.is-active, .el-pagination.is-background .el-pager li.is-active {
+  background-color: #068FFF !important;
+  border: none;
+}
+
+// table表格的复选框
+.el-table__header-wrapper .el-table-column--selection>.cell {
+  display: none !important;
+}
+
+
+// 避免主应用对子应用的样式污染
+.el-input__inner {
+  padding: 0px 12px;
+}
+
+.el-tabs__content {
+  height: 90% !important;
+  .el-tab-pane {
+    height: 100% !important;
+  }
+}
+
+// 按钮颜色修改
+.el-button.is-plain {
+  background-color: #fff;
+  color: #262626;
+  border: 1px solid #D9D9D9;
+  font-size: 12px;
+}
+.el-button1.is-plain {
+  background-color: #409EFF;
+  color: #fff;
+  border: 1px solid #409EFF;
+}
+
+.el-button1:focus, .el-button1:hover {
+  opacity: .8;
+}
+.el-button2.is-plain {
+background-color: #fff;
+  color: #262626;
+  border: 1px solid #D9D9D9;}
+.el-button2:focus, 
+.el-button2:hover{
+    // color: #409eff;
+    border-color: #c6e2ff;
+    background-color: #ecf5ff;
+}
+
+.el-button2.is-plain.is-disabled,
+.el-button2.is-plain.is-disabled:hover,
+.el-button2.is-plain.is-disabled:focus {
+background-color: #F5F5F5;
+  color: #b7b7b7;
+  border: 1px solid #F5F5F5;
+}
+
+.el-button-group .el-button--primary:first-child,
+.el-button-group .el-button--primary:last-child {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  color: #777;
+  &:hover {
+    color: #409eff;
+    border-color: #c6e2ff;
+    background-color: #ecf5ff;
+  }
+  &:active {
+        color: #3a8ee6;
+    border-color: #3a8ee6;
+    outline: 0;
+  }
+}

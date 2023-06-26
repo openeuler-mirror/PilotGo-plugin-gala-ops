@@ -1,0 +1,256 @@
+#!/bin/bash
+os_version=""
+os_type=""
+deploy_work_dir=$(realpath $(dirname $0))
+
+DOCKER_HUB='hub.oepkgs.net'
+DOCKER_HUB_TAG_PREFIX="${DOCKER_HUB}/a-ops"
+DOCKER_HTTPS_PROXY='http://user:pass@proxy.com:8080'
+
+
+LTS_2203_EPOL='http://121.36.84.172/dailybuild/openEuler-22.03-LTS/openEuler-22.03-LTS/EPOL/main/'$(uname -m)
+LTS_2203_EPOL_UPDATE='http://mirrors.aliyun.com/openeuler/openEuler-22.03-LTS/EPOL/update/main/'$(uname -m)
+LTS_2203_EVERYTHING='http://mirrors.aliyun.com/openeuler/openEuler-22.03-LTS/everything/'$(uname -m)
+LTS_2203_UPDATE='http://mirrors.aliyun.com/openeuler/openEuler-22.03-LTS/update/'$(uname -m)
+
+LTS_2203_SP1_EPOL='http://mirrors.aliyun.com/openeuler/openEuler-22.03-LTS-SP1/EPOL/main/'$(uname -m)
+LTS_2203_SP1_EPOL_UPDATE='http://mirrors.aliyun.com/openeuler/openEuler-22.03-LTS-SP1/EPOL/update/main/'$(uname -m)
+LTS_2203_SP1_EVERYTHING='http://mirrors.aliyun.com/openeuler/openEuler-22.03-LTS-SP1/everything/'$(uname -m)
+LTS_2203_SP1_UPDATE='http://mirrors.aliyun.com/openeuler/openEuler-22.03-LTS-SP1/update/'$(uname -m)
+
+LTS_2003_SP1_EPOL='http://repo.openeuler.org/openEuler-20.03-LTS-SP1/EPOL/'$(uname -m)
+LTS_2003_SP1_EPOL_UPDATE='http://repo.openeuler.org/openEuler-20.03-LTS-SP1/EPOL/update/'$(uname -m)
+LTS_2003_SP1_EVERYTHING='http://repo.openeuler.org/openEuler-20.03-LTS-SP1/everything/'$(uname -m)
+LTS_2003_SP1_UPDATE='http://repo.openeuler.org/openEuler-20.03-LTS-SP1/update/'$(uname -m)
+
+EPOL_REPO_URL=""
+EPOL_UPDATE_REPO_URL=""
+EVERYTHING_REPO_URL=""
+UPDATE_REPO_URL=""
+DOCKER_TAG=""
+DOCKER_USE_PROXY=""
+UPDATE_GALA=""
+GALA_DEPLOY_MODE="rpm"
+COMPONENT=""
+
+GOPHER_LOCAL_RPM=""
+LIBBPF_LOCAL_RPM="$(ls repo/libbpf-*$(uname -m).rpm 2>/dev/null)"
+FLAMEGRAPH_LOCAL_RPM="$(ls repo/flamegraph-*.rpm 2>/dev/null)"
+
+KAFKA_PORT=9092
+PROMETHEUS_PORT=9090
+ES_PORT=9200
+ARANGODB_PORT=8529
+PYROSCOPE_PORT=4040
+
+AOPSRUN_LOG="/var/log/aopsrun.log"
+HOST_IP="192.168.75.132"
+KAFKA_ADDR="${HOST_IP}:${KAFKA_PORT}"
+PROMETHEUS_ADDR="${HOST_IP}:${PROMETHEUS_PORT}"
+ES_ADDR="${HOST_IP}:${ES_PORT}"
+ARANGODB_ADDR="${HOST_IP}:${ARANGODB_PORT}"
+PYROSCOPE_ADDR="${HOST_IP}:${PYROSCOPE_PORT}"
+
+PROMETHEUS_SCRAPE_LIST=""
+
+function get_grafana_datasourcesID_byName() {
+    d_name="$1"
+
+    d_id=$(curl -X GET -H "Content-Type: application/json" http://admin:admin@${HOST_IP}:3000/api/datasources/id/${d_name} 2>/dev/null)
+    if echo $d_id | grep -q 'not found' ; then
+        echo_err_exit "Failed to find datasource ${d_name} in grafana"
+    fi
+
+    d_id=${d_id##*:}
+    d_id=${d_id%?}
+    echo $d_id
+}
+
+function echo_err_exit() {
+    echo -e "\t\e[31m $@ \e[0m"
+    exit 1;
+}
+
+function docker_pull_image() {
+    tag_name="$1"
+    if [ ! -n "$tag_name" ] ; then
+        exit 1
+    fi
+
+    docker --version >/dev/null 2>&1  || echo_err_exit "Error: Docker cmd not found, please install docker firstly"
+    if [ "x${DOCKER_USE_PROXY}" == "xyes" ] ; then
+        echo "Configuring docker proxy for intranet users, please fill \"DOCKER_HTTPS_PROXY\" with your proxy info"
+        config_docker_proxy
+    fi
+    docker pull ${DOCKER_HUB_TAG_PREFIX}/"${tag_name}"
+    [ $? -ne 0 ] && echo_err_exit "Error: failed to pull docker image:" $tag_name
+}
+
+echo -e "\e[32m [1]boot kafka \e[0m"
+	KAFKA_WORKDIR='/opt/kafka/'
+	cd ${KAFKA_WORKDIR}
+	./bin/kafka-server-stop.sh
+	./bin/zookeeper-server-stop.sh
+	./bin/zookeeper-server-start.sh config/zookeeper.properties >/dev/null 2>&1 &
+	sleep 30
+	./bin/kafka-server-start.sh config/server.properties >/dev/null 2>&1 &
+	sleep 10
+	cd - >/dev/null
+
+echo -e "\e[32m [2]boot prometheus \e[0m"
+	systemctl restart prometheus.service || echo "failed to start prometheus service"
+	sleep 5
+
+echo -e "\e[32m [3]boot arangodb \e[0m"
+	systemctl restart arangodb3.service || echo "failed to start arango service"
+	sleep 5
+
+echo -e "\e[32m [4]boot elasticsearch \e[0m"
+	ES_WORKDIR='/home/elastic/elasticsearch-8.5.3'
+	cd ${ES_WORKDIR}
+	kill -9 $(ps -ef | grep elasticsearch-8.5.3 | awk '{if($3==1) print $2}')  2>/dev/null
+	su - elastic -c "ES_JAVA_OPTS=\"-Xms1g -Xmx1g\" nohup /home/elastic/elasticsearch-8.5.3/bin/elasticsearch -E xpack.security.enabled=false -E http.host=0.0.0.0 -d > /dev/null 2>&1 &"
+	cd - >/dev/null
+	sleep 5
+
+echo -e "\e[32m [5]boot logstash \e[0m"
+	LOGSTASH_WORKDIR='/usr/share/logstash'
+	LOGSTASH_CONF="kafka2es.conf"
+	cd ${LOGSTASH_WORKDIR}
+	kill -9 $(ps -ef | grep logstash | grep ${LOGSTASH_CONF} | awk '{print $2}') 2>/dev/null
+	(nohup ${LOGSTASH_WORKDIR}/bin/logstash -f  /etc/logstash/conf.d/${LOGSTASH_CONF} > /dev/null 2>&1 &) || echo "failed to start logstash"
+	cd - >/dev/null
+	sleep 5
+
+echo -e "\e[32m [6]boot aops \e[0m"
+	systemctl restart gala-anteater.service 
+	if [ "$(systemctl is-active gala-anteater.service)" == 'active' ]; then
+		echo -e "\tsuccessfully start gala-anteater.service"
+	else 
+		echo -e "\tfailed to start gala-anteater.service"
+	fi
+
+	systemctl restart gala-spider.service 
+
+	if [ "$(systemctl is-active gala-spider.service)" == 'active' ]; then
+		echo -e "\tsuccessfully start gala-spider.service"
+	else 
+		echo -e "\tfailed to start gala-spider.service"
+	fi
+
+	systemctl restart gala-inference.service 
+	if [ "$(systemctl is-active gala-inference.service)" == 'active' ]; then
+		echo -e "\tsuccessfully start gala-inference.service"
+	else 
+		echo -e "\tfailed to start gala-inference.service"
+	fi
+
+echo -e "\e[32m [7]boot pyroscope \e[0m"
+	systemctl restart pyroscope-server.service || echo "failed to start pyroscope service"
+
+echo -e "\e[32m [8]boot grafana \e[0m"
+	container_name="aops-grafana"
+	# Pulling grafana docker image"
+	docker pull ${DOCKER_HUB_TAG_PREFIX}/"grafana"
+	
+	# Creating grafana container"
+	docker stop ${container_name} > ${AOPSRUN_LOG} 2>&1 ; docker rm ${container_name} >> ${AOPSRUN_LOG} 2>&1
+	docker run -d --name ${container_name} --network host -v /opt/grafana:/var/lib/grafana/ ${DOCKER_HUB_TAG_PREFIX}/grafana >> ${AOPSRUN_LOG} 2>&1
+	[ $? -ne 0 ] && echo_err_exit "Error: fail to run grafana container"
+	
+	sleep 5
+
+	# Configuring datasources"
+	i=0
+	while ! netstat -tunpl | grep ':3000' | grep 'LISTEN' | grep -q 'grafana' ; do
+	    sleep 1
+	    let i+=1
+	    if [ $i -ge 10 ] ; then
+	        echo_err_exit "Fail to connect grafana, check container status"
+	    fi
+	done
+
+	name="Prometheus-dfs"
+	id=$(get_grafana_datasourcesID_byName ${name})
+	result=$(curl -X PUT -H "Content-Type: application/json" -d '{"id":'${id}',"name":"'${name}'","type":"prometheus","access":"proxy","url":"http://'${PROMETHEUS_ADDR}'","user":"","database":"","basicAuth":false,"isDefault":true,"jsonData":{"httpMethod":"POST"},"readOnly":false}' http://admin:admin@${HOST_IP}:3000/api/datasources/${id} >> ${AOPSRUN_LOG} 2>&1)
+	if ! echo $result | grep -q 'Datasource updated' ; then
+	    #echo_err_exit "Fail to update ${name} datesource in grafana"
+	    echo -e "\tFail to update ${name} datesource in grafana"
+	fi
+	
+	name="pyroscope-datasource"
+	id=$(get_grafana_datasourcesID_byName ${name})
+	result=$(curl -X PUT -H "Content-Type: application/json" -d '{"id":'${id}',"name":"'${name}'","type":"pyroscope-datasource","access":"proxy","url":"","user":"","database":"","basicAuth":false,"isDefault":false,"jsonData":{"path":"http://'${PYROSCOPE_ADDR}'"},"readOnly":false}' http://admin:admin@${HOST_IP}:3000/api/datasources/${id} >> ${AOPSRUN_LOG} 2>&1)
+	if ! echo $result | grep -q 'Datasource updated' ; then
+	    #echo_err_exit "Fail to update ${name} datesource in grafana"
+	    echo -e "\tFail to update ${name} datesource in grafana"
+	fi
+	
+	name="Elasticsearch-anteater_hybrid_model"
+	id=$(get_grafana_datasourcesID_byName ${name})
+	result=$(curl -X PUT -H "Content-Type: application/json" -d '{"id":'${id}',"name":"'${name}'","type":"elasticsearch","access":"proxy","url":"http://'${ES_ADDR}'","user":"","database":"[gala_anteater_hybrid_model-]YYYY.MM.DD","basicAuth":false,"isDefault":false,"jsonData":{"includeFrozen":false,"interval":"Daily","logLevelField":"","logMessageField":"","maxConcurrentShardRequests":5,"timeField":"@timestamp"},"readOnly":false}' http://admin:admin@${HOST_IP}:3000/api/datasources/${id} >> ${AOPSRUN_LOG} 2>&1)
+	if ! echo $result | grep -q 'Datasource updated' ; then
+	    #echo_err_exit "Fail to update ${name} datesource in grafana"
+	    echo -e "\tFail to update ${name} datesource in grafana"
+	fi
+	
+	name="Elasticsearch-cause_inference"
+	id=$(get_grafana_datasourcesID_byName ${name})
+	result=$(curl -X PUT -H "Content-Type: application/json" -d '{"id":'${id}',"name":"'${name}'","type":"elasticsearch","access":"proxy","url":"http://'${ES_ADDR}'","user":"","database":"[gala_cause_inference-]YYYY.MM.DD","basicAuth":false,"isDefault":false,"jsonData":{"includeFrozen":false,"interval":"Daily","logLevelField":"","logMessageField":"","maxConcurrentShardRequests":5,"timeField":"@timestamp"},"readOnly":false}' http://admin:admin@${HOST_IP}:3000/api/datasources/${id} >> ${AOPSRUN_LOG} 2>&1)
+	if ! echo $result | grep -q 'Datasource updated' ; then
+	    #echo_err_exit "Fail to update ${name} datesource in grafana"
+	    echo -e "\tFail to update ${name} datesource in grafana"
+	fi
+	
+	name="Elasticsearch-cause_inference_top"
+	id=$(get_grafana_datasourcesID_byName ${name})
+	result=$(curl -X PUT -H "Content-Type: application/json" -d '{"id":'${id}',"name":"'${name}'","type":"elasticsearch","access":"proxy","url":"http://'${ES_ADDR}'","user":"","database":"[gala_cause_inference-]YYYY.MM.DD","basicAuth":false,"isDefault":false,"jsonData":{"includeFrozen":false,"interval":"Daily","logLevelField":"","logMessageField":"_source.Resource.top1","maxConcurrentShardRequests":5,"timeField":"@timestamp"},"readOnly":false}' http://admin:admin@${HOST_IP}:3000/api/datasources/${id} >> ${AOPSRUN_LOG} 2>&1)
+	if ! echo $result | grep -q 'Datasource updated' ; then
+	    #echo_err_exit "Fail to update ${name} datesource in grafana"
+	    echo -e "\tFail to update ${name} datesource in grafana"
+	fi
+	
+	name="Elasticsearch-graph"
+	id=$(get_grafana_datasourcesID_byName ${name})
+	result=$(curl -X PUT -H "Content-Type: application/json" -d '{"id":'${id}',"name":"'${name}'","type":"elasticsearch","access":"proxy","url":"http://'${ES_ADDR}'","user":"","database":"aops_graph2","basicAuth":false,"isDefault":false,"jsonData":{"includeFrozen":false,"logLevelField":"","logMessageField":"_source","maxConcurrentShardRequests":5,"timeField":"timestamp"},"readOnly":false}' http://admin:admin@${HOST_IP}:3000/api/datasources/${id} >> ${AOPSRUN_LOG} 2>&1)
+	if ! echo $result | grep -q 'Datasource updated' ; then
+	    #echo_err_exit "Fail to update ${name} datesource in grafana"
+	    echo -e "\tFail to update ${name} datesource in grafana"
+	fi
+	
+	
+	# Create topo graph es resources
+	curl -X PUT "${ES_ADDR}/aops_graph2?pretty" >/dev/null 2>&1
+	
+	# Running daemon that transfrom arangodb to es
+	kill -9 $(ps -ef | grep arangodb2es.py | grep -v grep | awk '{print $2}')  2>/dev/null
+	sleep 30
+	python3 /opt/grafana/arangodb2es.py > /dev/null 2> ${AOPSRUN_LOG} &
+
+echo -e "\e[32m [10]boot opengauss \e[0m"
+	OPNEGAUSS_DEPLOY_SCRIPT='/opt/a-ops-tools-master/opengauss/create_master_slave.sh'
+
+	docker_pull_image "opengauss:3.0.0"
+
+	if [ -f "${OPNEGAUSS_DEPLOY_SCRIPT}" ] ; then
+	    GS_DATADIR="$GS_DATADIR" sh ${OPNEGAUSS_DEPLOY_SCRIPT}
+	    [ $? -ne 0 ] && exit 1
+	else
+	    echo "Error: opengauss script create_master_slave.sh not found"
+	    exit 1
+	fi
+	
+	systemctl restart docker   # prevent iptables-related issues
+	container_id=$(docker ps | grep -w opengauss_master | awk '{print $1}')
+	docker exec -it ${container_id} /bin/bash -c  "su - omm -c \"echo create database tpccdb\; > ~/tmp.gsql\""
+	docker exec -it ${container_id} /bin/bash -c  "su - omm -c \"echo create user tpcc with password \'tpcc_123456\'\; >> ~/tmp.gsql\""
+	docker exec -it ${container_id} /bin/bash -c  "su - omm -c \"echo grant all privilege to tpcc\; >> ~/tmp.gsql\""
+	docker exec -it ${container_id} /bin/bash -c  "su - omm -c \"echo create user opengauss_exporter with monadmin password \'opengauss_exporter123\'\; >> ~/tmp.gsql\""
+	docker exec -it ${container_id} /bin/bash -c  "su - omm -c \"echo grant usage on schema dbe_perf to opengauss_exporter\; >> ~/tmp.gsql\""
+	docker exec -it ${container_id} /bin/bash -c  "su - omm -c \"echo grant select on pg_stat_replication to opengauss_exporter\; >> ~/tmp.gsql\""
+	
+	docker exec -it ${container_id} /bin/bash -c  "su - omm -c \"gsql -f ~/tmp.gsql >/dev/null\""
+
+
+echo -e "\e[32m [10]sync time \e[0m"
+	ntpdate ntp1.aliyun.com
