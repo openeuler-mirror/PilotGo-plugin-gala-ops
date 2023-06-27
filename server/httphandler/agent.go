@@ -23,7 +23,12 @@ func InstallGopher(ctx *gin.Context) {
 		return
 	}
 
-	script, err := os.ReadFile("../sh-script/deploy_gopher")
+	workdir, err := os.Getwd()
+	if err != nil {
+		logger.Error("Err getting current work directory: ", err)
+	}
+
+	script, err := os.ReadFile(workdir + "/sh-script/deploy_gopher")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"code":   -1,
