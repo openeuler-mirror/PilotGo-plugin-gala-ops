@@ -6,12 +6,12 @@ import (
 	"os"
 
 	"gitee.com/openeuler/PilotGo-plugins/sdk/common"
+	"gitee.com/openeuler/PilotGo-plugins/sdk/logger"
 	"gitee.com/openeuler/PilotGo-plugins/sdk/plugin/client"
 	"github.com/gin-gonic/gin"
 	"openeuler.org/PilotGo/gala-ops-plugin/agentmanager"
 )
 
-// TODO: 接收到pilotgo server部署aops组件请求后直接响应部署脚本
 func InstallGopher(ctx *gin.Context) {
 	param := &common.Batch{}
 	if err := ctx.BindJSON(param); err != nil {
@@ -19,6 +19,8 @@ func InstallGopher(ctx *gin.Context) {
 			"code":   -1,
 			"status": "parameter error",
 		})
+		logger.Error("ctx.bindjson(param) error: ", err)
+		return
 	}
 
 	script, err := os.ReadFile("../sh-script/deploy_gopher")
@@ -27,6 +29,8 @@ func InstallGopher(ctx *gin.Context) {
 			"code":   -1,
 			"status": fmt.Sprintf("read deploy script error:%s", err),
 		})
+		logger.Error("read deploy script error:%s", err)
+		return
 	}
 
 	cmdResults, err := agentmanager.Galaops.Sdkmethod.RunScript(param, string(script))
@@ -35,6 +39,8 @@ func InstallGopher(ctx *gin.Context) {
 			"code":   -1,
 			"status": fmt.Sprintf("run remote script error:%s", err),
 		})
+		logger.Error("run remote script error:%s", err)
+		return
 	}
 
 	ret := []interface{}{}
