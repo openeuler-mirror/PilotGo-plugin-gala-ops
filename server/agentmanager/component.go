@@ -220,38 +220,37 @@ func (o *Opsclient) DeployStatusCheck() error {
 		batch.MachineUUIDs = append(batch.MachineUUIDs, m.UUID)
 	}
 
-	logger.Debug("\033[32m***plugin self-check***\033[0m")
+	logger.Debug("***plugin self-check***")
 
 	// 检查prometheus插件是否在运行
-	logger.Debug("\033[32m***prometheus plugin running check***\033[0m")
+	logger.Debug("***prometheus plugin running check***")
 	promepluginstatus, _ := Galaops.CheckPrometheusPlugin()
 	if !promepluginstatus {
-		logger.Error("\033[31m***prometheus plugin is not running***\033[0m")
+		logger.Error("***prometheus plugin is not running***")
 	} else {
-		logger.Debug("\033[32m***prometheus plugin running check down***\033[0m")
+		logger.Debug("***prometheus plugin running check down***")
 	}
 
 	// 向prometheus插件发送可视化插件json模板    TODO: prometheus plugin 实现接收jsonmode的接口
-	logger.Debug("\033[32m***send json mode to prometheus plugin***\033[0m")
+	logger.Debug("***send json mode to prometheus plugin***")
 	respbody, retcode, err := Galaops.SendJsonMode("/abc")
 	if err != nil || retcode != 201 {
-		logger.Error("\033[31m***Err sending jsonmode to prometheus plugin***\033[0m: ", respbody, retcode, err)
+		logger.Error("***Err sending jsonmode to prometheus plugin***: ", respbody, retcode, err)
 	}
 
 	// 获取业务机集群gala-ops基础组件安装部署情况
-	logger.Debug("\033[32m***basic components deploy status check***\033[0m")
-	logger.Debug("\033[32m***basic components deploy status check down***\033[0m")
+	logger.Debug("***basic components deploy status check***")
+	logger.Debug("***basic components deploy status check down***")
 
 	// 获取业务机集群gala-ops基础组件版本信息
-	logger.Debug("\033[32m***basic components version check***\033[0m")
+	logger.Debug("***basic components version check***")
 	machines, err = GetPkgVersion(machines, batch, "gala-gopher")
 	if err != nil {
-		logger.Error("\033[31m***gala-gopher version check failed***\033[0m: %s", err.Error())
-	} else {
-		logger.Debug("\033[32m***basic components version check down***\033[0m")
+		logger.Error("***gala-gopher version check failed***: %s", err.Error())
 	}
+	logger.Debug("***basic components version check down***")
 
-	logger.Debug("\033[32m***plugin self-check down***\033[0m")
+	logger.Debug("***plugin self-check down***")
 
 	// 添加业务机集群信息至opsclient.agentmap
 	for _, m := range machines {
