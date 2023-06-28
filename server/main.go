@@ -35,8 +35,6 @@ func main() {
 
 	InitLogger()
 
-	engine := gin.Default()
-
 	PluginClient := client.DefaultClient(PluginInfo)
 	// 临时给server赋值
 	PluginClient.Server = "http://192.168.75.100:8887"
@@ -51,26 +49,8 @@ func main() {
 		logger.Error(err.Error())
 	}
 
-	// 临时自定义获取prometheus地址方式
-	promeplugin, err := agentmanager.Galaops.Getplugininfo(PluginClient.Server, "Prometheus")
-	if err != nil {
-		logger.Error(err.Error())
-	}
-	agentmanager.Galaops.PromePlugin = promeplugin
-
-	// 检查prometheus插件是否在运行
-	promepluginstatus, _ := agentmanager.Galaops.CheckPrometheusPlugin()
-	if !promepluginstatus {
-		logger.Error("prometheus plugin is not running")
-	}
-
-	// 向prometheus插件发送可视化插件json模板    TODO: prometheus plugin 实现接收jsonmode的接口
-	respbody, retcode, err := agentmanager.Galaops.SendJsonMode("/abc")
-	if err != nil || retcode != 201 {
-		logger.Error("failed to send jsonmode to prometheus plugin: ", respbody, retcode, err)
-	}
-
 	// 设置router
+	engine := gin.Default()
 	agentmanager.Galaops.Sdkmethod.RegisterHandlers(engine)
 	router.InitRouter(engine)
 	if err := engine.Run(config.Config().Http.Addr); err != nil {
