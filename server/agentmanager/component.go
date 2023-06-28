@@ -202,6 +202,14 @@ func (o *Opsclient) GetMachineList() ([]*database.Agent, error) {
 }
 
 func (o *Opsclient) DeployStatusCheck() error {
+	// 临时自定义获取prometheus地址方式
+	promeplugin, err := Galaops.Getplugininfo(Galaops.Sdkmethod.Server, "Prometheus")
+	if err != nil {
+		logger.Error(err.Error())
+	}
+	Galaops.PromePlugin = promeplugin
+
+	// 获取业务机集群机器列表
 	machines, err := Galaops.GetMachineList()
 	if err != nil {
 		return err
@@ -212,12 +220,35 @@ func (o *Opsclient) DeployStatusCheck() error {
 		batch.MachineUUIDs = append(batch.MachineUUIDs, m.UUID)
 	}
 
-	// 获取业务机集群gala-gopher安装部署情况
+	logger.Debug("\033[32m***plugin self-check***\033[0m")
 
-	// 获取业务机集群gala-gopher版本信息
+	// 检查prometheus插件是否在运行
+	logger.Debug("\033[32m***prometheus plugin running check***\033[0m")
+	promepluginstatus, _ := Galaops.CheckPrometheusPlugin()
+	if !promepluginstatus {
+		logger.Error("\033[31m***prometheus plugin is not running***\033[0m")
+	} else {
+		logger.Debug("\033[32m***prometheus plugin running check down***\033[0m")
+	}
+
+	// 向prometheus插件发送可视化插件json模板    TODO: prometheus plugin 实现接收jsonmode的接口
+	logger.Debug("\033[32m***send json mode to prometheus plugin***\033[0m")
+	respbody, retcode, err := Galaops.SendJsonMode("/abc")
+	if err != nil || retcode != 201 {
+		logger.Error("\033[31m***Err sending jsonmode to prometheus plugin***\033[0m: ", respbody, retcode, err)
+	}
+
+	// 获取业务机集群gala-ops基础组件安装部署情况
+	logger.Debug("\033[32m***basic components deploy status check***\033[0m")
+	logger.Debug("\033[32m***basic components deploy status check down***\033[0m")
+
+	// 获取业务机集群gala-ops基础组件版本信息
+	logger.Debug("\033[32m***basic components version check***\033[0m")
 	machines, err = GetPkgVersion(machines, batch, "gala-gopher")
 	if err != nil {
-		return err
+		logger.Error("\033[31m***gala-gopher version check failed***\033[0m: %s", err.Error())
+	} else {
+		logger.Debug("\033[32m***basic components version check down***\033[0m")
 	}
 
 	// 添加业务机集群信息至opsclient.agentmap

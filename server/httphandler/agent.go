@@ -13,6 +13,10 @@ import (
 )
 
 func InstallGopher(ctx *gin.Context) {
+	// ttcode
+	fmt.Println("\033[32mc.request.headers\033[0m: ", ctx.Request.Header)
+	fmt.Println("\033[32mc.request.body\033[0m: ", ctx.Request.Body)
+
 	param := &common.Batch{}
 	if err := ctx.BindJSON(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -22,6 +26,9 @@ func InstallGopher(ctx *gin.Context) {
 		logger.Error("ctx.bindjson(param) error: ", err)
 		return
 	}
+
+	// ttcode
+	fmt.Println("\033[32mparam\033[0m: ", param)
 
 	workdir, err := os.Getwd()
 	if err != nil {
