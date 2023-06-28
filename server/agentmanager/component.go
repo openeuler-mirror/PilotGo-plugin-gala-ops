@@ -251,6 +251,8 @@ func (o *Opsclient) DeployStatusCheck() error {
 		logger.Debug("\033[32m***basic components version check down***\033[0m")
 	}
 
+	logger.Debug("\033[32m***plugin self-check down***\033[0m")
+
 	// 添加业务机集群信息至opsclient.agentmap
 	for _, m := range machines {
 		o.AddAgent(m)
