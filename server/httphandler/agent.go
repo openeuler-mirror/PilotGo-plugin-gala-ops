@@ -14,8 +14,8 @@ import (
 
 func InstallGopher(ctx *gin.Context) {
 	// ttcode
-	fmt.Println("\033[32mc.request.headers\033[0m: ", ctx.Request.Header)
-	fmt.Println("\033[32mc.request.body\033[0m: ", ctx.Request.Body)
+	fmt.Println("\033[32mc.req.headers\033[0m: ", ctx.Request.Header)
+	fmt.Println("\033[32mc.req.body\033[0m: ", ctx.Request.Body)
 
 	param := &common.Batch{}
 	if err := ctx.BindJSON(param); err != nil {
@@ -84,22 +84,32 @@ func InstallGopher(ctx *gin.Context) {
 }
 
 func UpgradeGopher(ctx *gin.Context) {
-	// TODO
+	// ttcode
+	fmt.Println("\033[32mc.req.headers\033[0m: ", ctx.Request.Header)
+	fmt.Println("\033[32mc.req.body\033[0m: ", ctx.Request.Body)
+
 	param := &common.Batch{}
 	if err := ctx.BindJSON(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"code":   -1,
 			"status": "parameter error",
 		})
+		logger.Error("ctx.bindjson(param) error: ", err)
+		return
 	}
 
+	// ttcode
+	fmt.Println("\033[32mparam\033[0m: ", param)
+
 	cmd := "systemctl stop gala-gopher && yum upgrade -y gala-gopher && systemctl start gala-gopher"
-	cmdResults, err := client.GetClient().RunCommand(param, cmd)
+	cmdResults, err := agentmanager.Galaops.Sdkmethod.RunCommand(param, cmd)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"code":   -1,
 			"status": fmt.Sprintf("run remote script error:%s", err),
 		})
+		logger.Error("run remote command error:%s", err)
+		return
 	}
 
 	ret := []interface{}{}
