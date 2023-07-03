@@ -2,7 +2,7 @@ package database
 
 type Agent struct {
 	ID                    uint   `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-	UUID                  string `gorm:"not null" json:"uuid"`
+	UUID                  string `gorm:"not null;unique" json:"uuid"`
 	IP                    string `gorm:"not null" json:"ip"`
 	Port                  string `gorm:"not null" json:"port"`
 	Department            string `json:"department"`
