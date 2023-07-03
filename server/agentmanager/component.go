@@ -227,8 +227,6 @@ func (o *Opsclient) DeployStatusCheck() error {
 	promepluginstatus, _ := Galaops.CheckPrometheusPlugin()
 	if !promepluginstatus {
 		logger.Error("***prometheus plugin is not running***")
-	} else {
-		logger.Debug("***prometheus plugin running check down***")
 	}
 
 	// 向prometheus插件发送可视化插件json模板    TODO: prometheus plugin 实现接收jsonmode的接口
@@ -238,17 +236,17 @@ func (o *Opsclient) DeployStatusCheck() error {
 		logger.Error("***Err sending jsonmode to prometheus plugin***: ", respbody, retcode, err)
 	}
 
-	// 获取业务机集群gala-ops基础组件安装部署情况
+	// 获取业务机集群gala-ops基础组件安装部署运行信息
 	logger.Debug("***basic components deploy status check***")
-	logger.Debug("***basic components deploy status check down***")
-
-	// 获取业务机集群gala-ops基础组件版本信息
-	logger.Debug("***basic components version check***")
-	machines, err = GetPkgVersion(machines, batch, "gala-gopher")
+	machines, err = GetPkgDeployInfo(machines, batch, "gala-gopher")
 	if err != nil {
 		logger.Error("***gala-gopher version check failed***: %s", err.Error())
 	}
-	logger.Debug("***basic components version check down***")
+	machines, err = GetPkgRunningInfo(machines, batch, "gala-gopher")
+	if err != nil {
+		logger.Error("***gala-gopher running status check failed***: %s", err.Error())
+	}
+	logger.Debug("***basic components deploy status check down***")
 
 	logger.Debug("***plugin self-check down***")
 
@@ -256,6 +254,14 @@ func (o *Opsclient) DeployStatusCheck() error {
 	for _, m := range machines {
 		o.AddAgent(m)
 	}
+
+	// ttcode
+	Galaops.agentMap.Range(
+		func(key, value any) bool {
+			logger.Debug("\033[32magent:\033[0m ", value)
+			return true
+		},
+	)
 
 	// 更新DB中业务机集群的信息
 	dberr := database.GlobalDB.Save(&machines).Error
