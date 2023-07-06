@@ -16,41 +16,42 @@ func InstallGopher(ctx *gin.Context) {
 	fmt.Println("\033[32mc.req.headers\033[0m: ", ctx.Request.Header)
 	fmt.Println("\033[32mc.req.body\033[0m: ", ctx.Request.Body)
 
-	param := &common.Batch{}
-	if err := ctx.BindJSON(param); err != nil {
+	batches := &common.Batch{}
+	if err := ctx.BindJSON(batches); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"code":   -1,
 			"status": "parameter error",
 		})
-		logger.Error("ctx.bindjson(param) error: ", err)
+		logger.Error("ctx.bindjson(batches) error: %s", err.Error())
 		return
 	}
 
 	// ttcode
-	fmt.Println("\033[32mparam\033[0m: ", param)
+	fmt.Println("\033[32mparam\033[0m: ", batches)
 
 	workdir, err := os.Getwd()
 	if err != nil {
-		logger.Error("Err getting current work directory: ", err)
+		logger.Error("Err getting current work directory: %s", err.Error())
 	}
 
-	script, err := os.ReadFile(workdir + "/sh-script/deploy_gopher")
+	script, err := os.ReadFile(workdir + "/script/deploy.sh")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"code":   -1,
-			"status": fmt.Sprintf("read deploy script error:%s", err),
+			"status": fmt.Sprintf("Err reading deploy script:%s", err),
 		})
-		logger.Error("read deploy script error:%s", err)
+		logger.Error("Err reading deploy script: %s", err.Error())
 		return
 	}
 
-	cmdResults, err := agentmanager.Galaops.Sdkmethod.RunScript(param, string(script))
+	params := []string{"gopher", "-K", "192.168.75.132:9092"}
+	cmdResults, err := agentmanager.Galaops.Sdkmethod.RunScript(batches, string(script), params)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"code":   -1,
 			"status": fmt.Sprintf("run remote script error:%s", err),
 		})
-		logger.Error("run remote script error:%s", err)
+		logger.Error("run remote script error: %s", err.Error())
 		return
 	}
 
@@ -93,7 +94,7 @@ func UpgradeGopher(ctx *gin.Context) {
 			"code":   -1,
 			"status": "parameter error",
 		})
-		logger.Error("ctx.bindjson(param) error: ", err)
+		logger.Error("ctx.bindjson(param) error: %s", err.Error())
 		return
 	}
 
@@ -107,7 +108,7 @@ func UpgradeGopher(ctx *gin.Context) {
 			"code":   -1,
 			"status": fmt.Sprintf("run remote script error:%s", err),
 		})
-		logger.Error("run remote command error:%s", err)
+		logger.Error("run remote command error: %s", err.Error())
 		return
 	}
 
@@ -149,7 +150,7 @@ func UninstallGopher(ctx *gin.Context) {
 			"code":   -1,
 			"status": "parameter error",
 		})
-		logger.Error("ctx.bindjson(param) error: ", err)
+		logger.Error("ctx.bindjson(param) error: %s", err.Error())
 		return
 	}
 
@@ -163,7 +164,7 @@ func UninstallGopher(ctx *gin.Context) {
 			"code":   -1,
 			"status": fmt.Sprintf("run remote script error:%s", err),
 		})
-		logger.Error("run remote command error:%s", err)
+		logger.Error("run remote command error: %s", err.Error())
 		return
 	}
 

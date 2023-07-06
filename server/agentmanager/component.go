@@ -233,18 +233,18 @@ func (o *Opsclient) DeployStatusCheck() error {
 	logger.Debug("***send json mode to prometheus plugin***")
 	respbody, retcode, err := Galaops.SendJsonMode("/abc")
 	if err != nil || retcode != 201 {
-		logger.Error("***Err sending jsonmode to prometheus plugin***: ", respbody, retcode, err)
+		logger.Error("Err sending jsonmode to prometheus plugin: %s, %d, %s", respbody, retcode, err.Error())
 	}
 
 	// 获取业务机集群gala-ops基础组件安装部署运行信息
 	logger.Debug("***basic components deploy status check***")
 	machines, err = GetPkgDeployInfo(machines, batch, "gala-gopher")
 	if err != nil {
-		logger.Error("***gala-gopher version check failed***: %s", err.Error())
+		logger.Error("gala-gopher version check failed: %s", err.Error())
 	}
 	machines, err = GetPkgRunningInfo(machines, batch, "gala-gopher")
 	if err != nil {
-		logger.Error("***gala-gopher running status check failed***: %s", err.Error())
+		logger.Error("gala-gopher running status check failed: %s", err.Error())
 	}
 	logger.Debug("***basic components deploy status check down***")
 
