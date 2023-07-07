@@ -23,10 +23,20 @@ import (
 	"openeuler.org/PilotGo/gala-ops-plugin/database"
 )
 
+type Middleware struct {
+	Kafka         string
+	Prometheus    string
+	Pyroscope     string
+	Arangodb      string
+	Elasticsearch string
+	Logstash      string
+}
+
 type Opsclient struct {
-	Sdkmethod   *client.Client
-	PromePlugin map[string]interface{}
-	agentMap    sync.Map
+	Sdkmethod        *client.Client
+	PromePlugin      map[string]interface{}
+	AgentMap         sync.Map
+	MiddlewareDeploy *Middleware
 }
 
 var Galaops *Opsclient
@@ -157,11 +167,11 @@ func (o *Opsclient) CheckPrometheusPlugin() (bool, error) {
 /*******************************************************agentmanager*******************************************************/
 
 func (o *Opsclient) AddAgent(a *database.Agent) {
-	o.agentMap.Store(a.UUID, a)
+	o.AgentMap.Store(a.UUID, a)
 }
 
 func (o *Opsclient) GetAgent(uuid string) *database.Agent {
-	agent, ok := o.agentMap.Load(uuid)
+	agent, ok := o.AgentMap.Load(uuid)
 	if ok {
 		return agent.(*database.Agent)
 	}
@@ -169,7 +179,7 @@ func (o *Opsclient) GetAgent(uuid string) *database.Agent {
 }
 
 func (o *Opsclient) DeleteAgent(uuid string) {
-	if _, ok := o.agentMap.LoadAndDelete(uuid); !ok {
+	if _, ok := o.AgentMap.LoadAndDelete(uuid); !ok {
 		logger.Warn("delete known agent:%s", uuid)
 	}
 }
@@ -250,13 +260,13 @@ func (o *Opsclient) DeployStatusCheck() error {
 
 	logger.Debug("***plugin self-check down***")
 
-	// 添加业务机集群信息至opsclient.agentmap
+	// 添加业务机集群信息至opsclient.AgentMap
 	for _, m := range machines {
 		o.AddAgent(m)
 	}
 
 	// ttcode
-	Galaops.agentMap.Range(
+	Galaops.AgentMap.Range(
 		func(key, value any) bool {
 			logger.Debug("\033[32magent:\033[0m ", value)
 			return true

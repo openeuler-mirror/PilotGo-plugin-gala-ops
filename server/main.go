@@ -41,6 +41,14 @@ func main() {
 	agentmanager.Galaops = &agentmanager.Opsclient{
 		Sdkmethod:   PluginClient,
 		PromePlugin: nil,
+		MiddlewareDeploy: &agentmanager.Middleware{
+			Kafka:      config.Config().Deploy.ServerMeta,
+			Prometheus: config.Config().Deploy.ServerMeta,
+			Pyroscope:  config.Config().Deploy.ServerMeta,
+			Arangodb:   config.Config().Deploy.ServerMeta,
+			Logstash:   config.Config().Deploy.ServerMeta,
+			Elasticsearch: config.Config().Deploy.ServerMeta,
+		},
 	}
 
 	// 业务机集群aops组件状态自检

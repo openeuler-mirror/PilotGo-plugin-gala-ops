@@ -31,12 +31,18 @@ type MysqlConf struct {
 	Database string `yaml:"database"`
 }
 
+type DeployConfig struct {
+	ServerBasic string `yaml:"server-basic"`
+	ServerMeta  string `yaml:"server-meta"`
+}
+
 type ServerConfig struct {
 	Grafana *GrafanaConf    `yaml:"grafana"`
 	Http    *HttpConf       `yaml:"http"`
 	PilotGo *PilotGoConf    `yaml:"PilotGo"`
 	Mysql   *MysqlConf      `yaml:"mysql"`
 	Logopts *logger.LogOpts `yaml:"log"`
+	Deploy  *DeployConfig   `yaml:"deploy"`
 }
 
 const config_file = "./config.yml"
