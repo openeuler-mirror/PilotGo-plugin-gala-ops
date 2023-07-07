@@ -23,4 +23,7 @@ type Agent struct {
 	Inference_running     bool   // true:running false:not running
 	Inference_version     string `gorm:"type:varchar(20)"`
 	Inference_installtime string
+	Kafka_deploy         bool   // ture:installed false:uninstalled
+	Kafka_running        bool   // true:running false:not running
+	Kafka_version        string `gorm:"type:varchar(20)"`
 }
