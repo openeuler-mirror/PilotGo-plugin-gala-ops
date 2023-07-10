@@ -18,6 +18,7 @@ func InitRouter(router *gin.Engine) {
 
 		api.PUT("/install_ops", httphandler.InstallOps)
 		api.PUT("/upgrade_ops", httphandler.UpgradeOps)
+		api.DELETE("/uninstall_ops", httphandler.UninstallOps)
 	}
 
 	metrics := router.Group("plugin/gala-ops/api/metrics")

@@ -345,3 +345,63 @@ func UpgradeOps(ctx *gin.Context) {
 		"data":   ret,
 	})
 }
+
+func UninstallOps(ctx *gin.Context) {
+	// ttcode
+	fmt.Println("\033[32muninstallops req.headers\033[0m: ", ctx.Request.Header)
+	fmt.Println("\033[32muninstallops req.body\033[0m: ", ctx.Request.Body)
+
+	batches := &common.Batch{}
+	var deploy_machine_uuid string
+
+	deploy_machine_ip := agentmanager.Galaops.BasicDeploy.Spider
+	agentmanager.Galaops.AgentMap.Range(func(key, value any) bool {
+		agent := value.(*database.Agent)
+		if agent.IP == deploy_machine_ip {
+			deploy_machine_uuid = agent.UUID
+			return true
+		}
+		return false
+	})
+	batches.MachineUUIDs = append(batches.MachineUUIDs, deploy_machine_uuid)
+
+	// ttcode
+	fmt.Println("\033[32muninstallops batch\033[0m: ", batches)
+
+	cmd := "systemctl stop gala-spider && systemctl stop gala-anteater && systemctl stop gala-inference && yum autoremove -y gala-ops"
+	cmdResults, err := agentmanager.Galaops.Sdkmethod.RunCommand(batches, cmd)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"code":   -1,
+			"status": fmt.Sprintf("run remote script error:%s", err),
+		})
+		logger.Error("run remote command error: %s", err.Error())
+		return
+	}
+
+	ret := []interface{}{}
+	for _, result := range cmdResults {
+		d := struct {
+			MachineUUID   string
+			UpgradeStatus string
+			Error         string
+		}{
+			MachineUUID:   result.MachineUUID,
+			UpgradeStatus: "ok",
+			Error:         "",
+		}
+
+		if result.RetCode != 0 {
+			d.UpgradeStatus = "error"
+			d.Error = result.Stderr
+		}
+
+		ret = append(ret, d)
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"code":   0,
+		"status": "ok",
+		"data":   ret,
+	})
+}
