@@ -265,6 +265,7 @@ func (o *Opsclient) DeployStatusCheck() error {
 		logger.Error("Err sending jsonmode to prometheus plugin: %s, %d, %s", respbody, retcode, err.Error())
 	}
 
+	// TODO: 自检部分添加各组件部署情况检测，更新opsclient中的middlewaredeploy和basicdeploy
 	// 获取业务机集群gala-ops基础组件安装部署运行信息
 	logger.Debug("***basic components deploy status check***")
 	machines, err = GetPkgDeployInfo(machines, batch, "gala-gopher")
