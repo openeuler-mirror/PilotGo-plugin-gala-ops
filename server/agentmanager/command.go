@@ -71,17 +71,15 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 
 // 获取集群gala-ops组件运行状态
 func GetPkgRunningInfo(machines []*database.Agent, batch *common.Batch, pkgname string) ([]*database.Agent, error) {
-	if pkgname == "gala-gopher" {
-		for _, m := range machines {
-			if !m.Gopher_deploy {
-				for i, bm := range batch.MachineUUIDs {
-					if m.UUID == bm {
-						copy(batch.MachineUUIDs[i:], batch.MachineUUIDs[i+1:])
-					}
-				}
-			}
-		}
-	}
+	// for _, m := range machines {
+	// 	if !m.Gopher_deploy {
+	// 		for i, bm := range batch.MachineUUIDs {
+	// 			if m.UUID == bm {
+	// 				copy(batch.MachineUUIDs[i:], batch.MachineUUIDs[i+1:])
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	cmdresults, err := Galaops.Sdkmethod.RunCommand(batch, "systemctl status "+pkgname)
 	if err != nil {
@@ -90,17 +88,35 @@ func GetPkgRunningInfo(machines []*database.Agent, batch *common.Batch, pkgname 
 
 	for _, result := range cmdresults {
 		// ttcode
-		logger.Debug("\033[32mrunning:\033[0m IP: %s, UUID: %s, code: %d, stdo: %s, stde: %s", result.MachineIP, result.MachineUUID, result.RetCode, result.Stdout, result.Stderr)
+		// logger.Debug("\033[32mrunning:\033[0m IP: %s, UUID: %s, code: %d, stdo: %s, stde: %s", result.MachineIP, result.MachineUUID, result.RetCode, result.Stdout, result.Stderr)
 		if result.RetCode == 3 && strings.Contains(result.Stdout, "Active: inactive (dead)") && result.Stderr == "" {
 			for _, m := range machines {
 				if m.UUID == result.MachineUUID {
-					m.Gopher_running = false
+					switch pkgname {
+					case "gala-gopher":
+						m.Gopher_running = false
+					case "gala-anteater":
+						m.Anteater_running = false
+					case "gala-inference":
+						m.Inference_running = false
+					case "gala-spider":
+						m.Spider_running = false
+					}
 				}
 			}
 		} else if result.RetCode == 0 && strings.Contains(result.Stdout, "Active: active (running)") && result.Stderr == "" {
 			for _, m := range machines {
 				if m.UUID == result.MachineUUID {
-					m.Gopher_running = true
+					switch pkgname {
+					case "gala-gopher":
+						m.Gopher_running = true
+					case "gala-anteater":
+						m.Anteater_running = true
+					case "gala-inference":
+						m.Inference_running = true
+					case "gala-spider":
+						m.Spider_running = true
+					}
 				}
 			}
 		} else {
