@@ -206,7 +206,8 @@ func InstallOps(ctx *gin.Context) {
 	var deploy_machine_uuid string
 	var deploy_machine_ip string
 
-	if deploy_machine_uuid = ctx.Query("uuid"); deploy_machine_uuid == "" {
+	switch deploy_machine_uuid = ctx.Query("uuid"); deploy_machine_uuid {
+	case "":
 		deploy_machine_ip = config.Config().Deploy.ServerBasic
 		agentmanager.Galaops.AgentMap.Range(func(key, value any) bool {
 			agent := value.(*database.Agent)
@@ -216,8 +217,20 @@ func InstallOps(ctx *gin.Context) {
 			}
 			return false
 		})
+	default:
+		agentmanager.Galaops.AgentMap.Range(func(key, value any) bool {
+			agent := value.(*database.Agent)
+			if agent.UUID == deploy_machine_uuid {
+				deploy_machine_ip = agent.IP
+				return true
+			}
+			return false
+		})
 	}
 	batches.MachineUUIDs = append(batches.MachineUUIDs, deploy_machine_uuid)
+	agentmanager.Galaops.BasicDeploy.Spider = deploy_machine_ip
+	agentmanager.Galaops.BasicDeploy.Anteater = deploy_machine_ip
+	agentmanager.Galaops.BasicDeploy.Inference = deploy_machine_ip
 
 	workdir, err := os.Getwd()
 	if err != nil {

@@ -15,6 +15,8 @@ func InitRouter(router *gin.Engine) {
 		api.PUT("/install_gopher", httphandler.InstallGopher)
 		api.PUT("/upgrade_gopher", httphandler.UpgradeGopher)
 		api.DELETE("/uninstall_gopher", httphandler.UninstallGopher)
+
+		api.PUT("/install_ops", httphandler.InstallOps)
 	}
 
 	metrics := router.Group("plugin/gala-ops/api/metrics")
