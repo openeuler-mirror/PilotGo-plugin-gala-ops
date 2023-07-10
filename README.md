@@ -1,23 +1,28 @@
 # PilotGo-plugin-gala-ops
 
 #### 介绍
-PilotGo gala-ops plugin to enable gala ops tools in PilotGo platform.
+PilotGo gala-ops应用插件，提供aops开源项目gala-spider、gala-anteater、gala-inference、gala-gopher等基础组件以及kafka、arangodb、pyroscope、elasticsearch、logstash等中间件基于PilotGo平台的集群部署、状态检测、一键启动、数据可视化等功能。
+
+note：PilotGo MySQL插件运行依赖PilotGo主平台，如何在PilotGo平台中使用插件，请参考PilotGo平台文档。
 
 #### 软件架构
-软件架构说明
+1. 开发工具：golang 1.19
+2. 系统支持：
+    业务机节点：openEuler-22.03-LTS-SP1
+    管理机节点：openEuler-22.03-LTS-SP1、kylin-v10-server
+![Alt text](pilotgo-plugin-gala-ops.png)
 
 
-#### 安装教程
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 使用说明
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
+#### 安装及使用教程
+1. 管理节点部署PilotGo gala-ops插件
+    git clone https://gitee.com/openeuler/PilotGo.git
+2. 编辑配置文件
+    cd pilotgo-plugin-gala-ops/server
+    vim config.yml
+3. 在pilotgo-plugin-gala-ops/server目录下运行插件
+    go run main.go
+3. 在PilotGo平台导入PilotGo gala-ops插件应用
+4. 在PilotGo平台使用PilotGo gala-ops插件相关功能 
 
 #### 参与贡献
 
@@ -26,12 +31,3 @@ PilotGo gala-ops plugin to enable gala ops tools in PilotGo platform.
 3.  提交代码
 4.  新建 Pull Request
 
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
