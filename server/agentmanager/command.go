@@ -16,7 +16,7 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 	if err == nil {
 		for _, result := range cmdresults {
 			if result.RetCode == 1 && strings.Contains(result.Stdout, "is not installed") && result.Stderr == "" {
-				logger.Error("%s not installed happened when running getpkgdeployinfo: %s, %s, %s; ", pkgname, result.MachineUUID, result.MachineIP, result.Stderr)
+				logger.Error("%s not installed in the process of running getpkgdeployinfo: %s, %s, %s; ", pkgname, result.MachineUUID, result.MachineIP, result.Stderr)
 				continue
 			} else if result.RetCode == 127 && result.Stdout == "" && strings.Contains(result.Stderr, "command not found") {
 				logger.Error("rpm not installed when running getpkgdeployinfo: %s, %s, %s", result.MachineUUID, result.MachineIP, result.Stderr)
@@ -45,14 +45,17 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 							m.Anteater_version = v
 							m.Anteater_deploy = true
 							m.Anteater_installtime = d
+							Galaops.BasicDeploy.Anteater = m.IP
 						case "gala-inference":
 							m.Inference_version = v
 							m.Inference_deploy = true
 							m.Inference_installtime = d
+							Galaops.BasicDeploy.Inference = m.IP
 						case "gala-spider":
 							m.Spider_version = v
 							m.Spider_deploy = true
 							m.Spider_installtime = d
+							Galaops.BasicDeploy.Spider = m.IP
 						}
 					}
 				}
@@ -68,11 +71,13 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 
 // 获取集群gala-ops组件运行状态
 func GetPkgRunningInfo(machines []*database.Agent, batch *common.Batch, pkgname string) ([]*database.Agent, error) {
-	for _, m := range machines {
-		if !m.Gopher_deploy {
-			for i, bm := range batch.MachineUUIDs {
-				if m.UUID == bm {
-					copy(batch.MachineUUIDs[i:], batch.MachineUUIDs[i+1:])
+	if pkgname == "gala-gopher" {
+		for _, m := range machines {
+			if !m.Gopher_deploy {
+				for i, bm := range batch.MachineUUIDs {
+					if m.UUID == bm {
+						copy(batch.MachineUUIDs[i:], batch.MachineUUIDs[i+1:])
+					}
 				}
 			}
 		}

@@ -270,11 +270,35 @@ func (o *Opsclient) DeployStatusCheck() error {
 	logger.Debug("***basic components deploy status check***")
 	machines, err = GetPkgDeployInfo(machines, batch, "gala-gopher")
 	if err != nil {
-		logger.Error("gala-gopher version check failed: %s", err.Error())
+		logger.Error("gala-gopher deploy check failed: %s", err.Error())
 	}
 	machines, err = GetPkgRunningInfo(machines, batch, "gala-gopher")
 	if err != nil {
 		logger.Error("gala-gopher running status check failed: %s", err.Error())
+	}
+	machines, err = GetPkgDeployInfo(machines, batch, "gala-spider")
+	if err != nil {
+		logger.Error("gala-spider deploy check failed: %s", err.Error())
+	}
+	machines, err = GetPkgRunningInfo(machines, batch, "gala-spider")
+	if err != nil {
+		logger.Error("gala-spider running status check failed: %s", err.Error())
+	}
+	machines, err = GetPkgDeployInfo(machines, batch, "gala-anteater")
+	if err != nil {
+		logger.Error("gala-anteater deploy check failed: %s", err.Error())
+	}
+	machines, err = GetPkgRunningInfo(machines, batch, "gala-anteater")
+	if err != nil {
+		logger.Error("gala-anteater running status check failed: %s", err.Error())
+	}
+	machines, err = GetPkgDeployInfo(machines, batch, "gala-inference")
+	if err != nil {
+		logger.Error("gala-inference deploy check failed: %s", err.Error())
+	}
+	machines, err = GetPkgRunningInfo(machines, batch, "gala-inference")
+	if err != nil {
+		logger.Error("gala-inference running status check failed: %s", err.Error())
 	}
 	logger.Debug("***basic components deploy status check down***")
 
@@ -288,7 +312,7 @@ func (o *Opsclient) DeployStatusCheck() error {
 	// ttcode
 	Galaops.AgentMap.Range(
 		func(key, value any) bool {
-			logger.Debug("\033[32magent:\033[0m ", value)
+			logger.Debug("\033[32magent:\033[0m %v", value)
 			return true
 		},
 	)
