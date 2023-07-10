@@ -13,18 +13,6 @@ import (
 	"openeuler.org/PilotGo/gala-ops-plugin/router"
 )
 
-const Version = "0.0.1"
-
-var PluginInfo = &client.PluginInfo{
-	Name:        "gala-ops",
-	Version:     Version,
-	Description: "gala-ops智能运维工具",
-	Author:      "guozhengxin",
-	Email:       "guozhengxin@kylinos.cn",
-	Url:         "http://192.168.75.100:9999/plugin/gala-ops",
-	// ReverseDest: "http://192.168.48.163:3000/",
-}
-
 func main() {
 	fmt.Println("hello gala-ops")
 
@@ -35,19 +23,24 @@ func main() {
 
 	InitLogger()
 
-	PluginClient := client.DefaultClient(PluginInfo)
+	PluginClient := client.DefaultClient(agentmanager.PluginInfo)
 	// 临时给server赋值
 	PluginClient.Server = "http://192.168.75.100:8887"
 	agentmanager.Galaops = &agentmanager.Opsclient{
 		Sdkmethod:   PluginClient,
 		PromePlugin: nil,
 		MiddlewareDeploy: &agentmanager.Middleware{
-			Kafka:      config.Config().Deploy.ServerMeta,
-			Prometheus: config.Config().Deploy.ServerMeta,
-			Pyroscope:  config.Config().Deploy.ServerMeta,
-			Arangodb:   config.Config().Deploy.ServerMeta,
-			Logstash:   config.Config().Deploy.ServerMeta,
+			Kafka:         config.Config().Deploy.ServerMeta,
+			Prometheus:    config.Config().Deploy.ServerMeta,
+			Pyroscope:     config.Config().Deploy.ServerMeta,
+			Arangodb:      config.Config().Deploy.ServerMeta,
+			Logstash:      config.Config().Deploy.ServerMeta,
 			Elasticsearch: config.Config().Deploy.ServerMeta,
+		},
+		BasicDeploy: &agentmanager.BasicComponents{
+			Spider:    config.Config().Deploy.ServerBasic,
+			Anteater:  config.Config().Deploy.ServerBasic,
+			Inference: config.Config().Deploy.ServerBasic,
 		},
 	}
 

@@ -23,6 +23,18 @@ import (
 	"openeuler.org/PilotGo/gala-ops-plugin/database"
 )
 
+const Version = "0.0.1"
+
+var PluginInfo = &client.PluginInfo{
+	Name:        "gala-ops",
+	Version:     Version,
+	Description: "gala-ops智能运维工具",
+	Author:      "guozhengxin",
+	Email:       "guozhengxin@kylinos.cn",
+	Url:         "http://192.168.75.100:9999/plugin/gala-ops",
+	// ReverseDest: "http://192.168.48.163:3000/",
+}
+
 type Middleware struct {
 	Kafka         string
 	Prometheus    string
@@ -32,11 +44,18 @@ type Middleware struct {
 	Logstash      string
 }
 
+type BasicComponents struct {
+	Spider    string
+	Anteater  string
+	Inference string
+}
+
 type Opsclient struct {
 	Sdkmethod        *client.Client
 	PromePlugin      map[string]interface{}
 	AgentMap         sync.Map
 	MiddlewareDeploy *Middleware
+	BasicDeploy      *BasicComponents
 }
 
 var Galaops *Opsclient
