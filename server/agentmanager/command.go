@@ -71,17 +71,32 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 
 // 获取集群gala-ops组件运行状态
 func GetPkgRunningInfo(machines []*database.Agent, batch *common.Batch, pkgname string) ([]*database.Agent, error) {
-	// for _, m := range machines {
-	// 	if !m.Gopher_deploy {
-	// 		for i, bm := range batch.MachineUUIDs {
-	// 			if m.UUID == bm {
-	// 				copy(batch.MachineUUIDs[i:], batch.MachineUUIDs[i+1:])
-	// 			}
-	// 		}
-	// 	}
-	// }
+	// 运行状态检测自检时将未部署pkgname的机器从batch.machinesuuids数组中移除；TODO: 所有机器都进行了基础组件部署状态自检并打印了日志
+	batch_deployed := batch
+	delete_from_batch := func(mgopherdeploy bool, muuid string, b *common.Batch) *common.Batch {
+		if !mgopherdeploy {
+			for i, bm := range b.MachineUUIDs {
+				if muuid == bm {
+					copy(b.MachineUUIDs[i:], b.MachineUUIDs[i+1:])
+				}
+			}
+		}
+		return b
+	}
+	for _, m := range machines {
+		switch pkgname {
+		case "gala-gopher":
+			batch_deployed = delete_from_batch(m.Gopher_deploy, m.UUID, batch_deployed)
+		case "gala-spider":
+			batch_deployed = delete_from_batch(m.Spider_deploy, m.UUID, batch_deployed)
+		case "gala-anteater":
+			batch_deployed = delete_from_batch(m.Anteater_deploy, m.UUID, batch_deployed)
+		case "gala-inference":
+			batch_deployed = delete_from_batch(m.Inference_deploy, m.UUID, batch_deployed)
+		}
+	}
 
-	cmdresults, err := Galaops.Sdkmethod.RunCommand(batch, "systemctl status "+pkgname)
+	cmdresults, err := Galaops.Sdkmethod.RunCommand(batch_deployed, "systemctl status "+pkgname)
 	if err != nil {
 		return nil, fmt.Errorf("runcommand error: %s", err)
 	}
