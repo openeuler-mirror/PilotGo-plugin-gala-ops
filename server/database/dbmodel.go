@@ -26,4 +26,16 @@ type Agent struct {
 	Kafka_deploy          bool   // ture:installed false:uninstalled
 	Kafka_running         bool   // true:running false:not running
 	Kafka_version         string `gorm:"type:varchar(20)"`
+	Prometheus_deploy     bool   // ture:installed false:uninstalled
+	Prometheus_running    bool   // true:running false:not running
+	Prometheus_version    string `gorm:"type:varchar(20)"`
+	Pyroscope_deploy      bool   // ture:installed false:uninstalled
+	Pyroscope_running     bool   // true:running false:not running
+	Pyroscope_version     string `gorm:"type:varchar(20)"`
+	Arangodb_deploy       bool   // ture:installed false:uninstalled
+	Arangodb_running      bool   // true:running false:not running
+	Arangodb_version      string `gorm:"type:varchar(20)"`
+	Elasticsearch_deploy  bool   // ture:installed false:uninstalled
+	Elasticsearch_running bool   // true:running false:not running
+	Elasticsearch_version string `gorm:"type:varchar(20)"`
 }
