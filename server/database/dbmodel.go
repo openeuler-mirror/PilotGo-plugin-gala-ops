@@ -2,11 +2,11 @@ package database
 
 type Agent struct {
 	ID                    uint   `gorm:"primary_key;AUTO_INCREMENT" json:"id"`
-	UUID                  string `gorm:"not null;unique" json:"uuid"`
-	IP                    string `gorm:"not null" json:"ip"`
+	UUID                  string `gorm:"not null;unique" json:"UUID"`
+	IP                    string `gorm:"not null" json:"IP"`
 	Port                  string `gorm:"not null" json:"port"`
-	Department            string `json:"department"`
-	State                 int    `gorm:"not null" json:"state"` // true:running false:not running
+	Department            string `json:"Department"`
+	State                 int    `gorm:"not null" json:"State"` // true:running false:not running
 	Gopher_deploy         bool   // ture:installed false:uninstalled
 	Gopher_running        bool   // true:running false:not running
 	Gopher_version        string `gorm:"type:varchar(20)"`
