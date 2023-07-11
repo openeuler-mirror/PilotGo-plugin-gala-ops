@@ -10,7 +10,7 @@ import (
 	"openeuler.org/PilotGo/gala-ops-plugin/utils"
 )
 
-// 获取集群gala-ops组件部署信息; TODO: 组件部署时间检测异常
+// 获取集群gala-ops组件部署信息
 func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname string) ([]*database.Agent, error) {
 	cmdresults, err := Galaops.Sdkmethod.RunCommand(batch, "rpm -qi "+pkgname)
 	if err == nil {
@@ -24,14 +24,14 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 					logger.Error("rpm not installed when running getpkgdeployinfo: %s, %s, %s", result.MachineUUID, result.MachineIP, result.Stderr)
 					continue
 				} else if result.RetCode == 0 && len(result.Stdout) > 0 && result.Stderr == "" {
-					reader := strings.NewReader(result.Stdout)
-					v, err := utils.ReadInfo(reader, `^Version.*`)
+					reader1 := strings.NewReader(result.Stdout)
+					v, err := utils.ReadInfo(reader1, `^Version.*`)
 					if err != nil && len(v) != 0 {
 						logger.Error("failed to read RPM package version when running getpkgdeployinfo: %s, %s, %s", result.MachineUUID, result.MachineIP, result.Stderr)
 						continue
 					}
-
-					d, err := utils.ReadInfo(reader, `^Install Date.*`)
+					reader2 := strings.NewReader(result.Stdout)
+					d, err := utils.ReadInfo(reader2, `^Install Date.*`)
 					if err != nil && len(d) != 0 {
 						logger.Error("failed to read RPM package install date when running getpkgdeployinfo: %s, %s, %s", result.MachineUUID, result.MachineIP, result.Stderr)
 					}
@@ -59,14 +59,14 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 					// logger.Error("rpm not installed when running getpkgdeployinfo: %s, %s, %s", result.MachineUUID, result.MachineIP, result.Stderr)
 					continue
 				} else if result.RetCode == 0 && len(result.Stdout) > 0 && result.Stderr == "" {
-					reader := strings.NewReader(result.Stdout)
-					v, err := utils.ReadInfo(reader, `^Version.*`)
+					reader1 := strings.NewReader(result.Stdout)
+					v, err := utils.ReadInfo(reader1, `^Version.*`)
 					if err != nil && len(v) != 0 {
 						logger.Error("failed to read RPM package version when running getpkgdeployinfo: %s, %s, %s", result.MachineUUID, result.MachineIP, result.Stderr)
 						continue
 					}
-
-					d, err := utils.ReadInfo(reader, `^Install Date.*`)
+					reader2 := strings.NewReader(result.Stdout)
+					d, err := utils.ReadInfo(reader2, `^Install Date.*`)
 					if err != nil && len(d) != 0 {
 						logger.Error("failed to read RPM package install date when running getpkgdeployinfo: %s, %s, %s", result.MachineUUID, result.MachineIP, result.Stderr)
 					}
