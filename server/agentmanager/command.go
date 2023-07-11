@@ -38,27 +38,9 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 
 					for _, m := range machines {
 						if m.UUID == result.MachineUUID {
-							switch pkgname {
-							case "gala-gopher":
-								m.Gopher_version = v
-								m.Gopher_deploy = true
-								m.Gopher_installtime = d
-							case "gala-anteater":
-								m.Anteater_version = v
-								m.Anteater_deploy = true
-								m.Anteater_installtime = d
-								Galaops.BasicDeploy.Anteater = m.IP
-							case "gala-inference":
-								m.Inference_version = v
-								m.Inference_deploy = true
-								m.Inference_installtime = d
-								Galaops.BasicDeploy.Inference = m.IP
-							case "gala-spider":
-								m.Spider_version = v
-								m.Spider_deploy = true
-								m.Spider_installtime = d
-								Galaops.BasicDeploy.Spider = m.IP
-							}
+							m.Gopher_version = v
+							m.Gopher_deploy = true
+							m.Gopher_installtime = d
 						}
 					}
 				} else {
@@ -92,10 +74,6 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 					for _, m := range machines {
 						if m.UUID == result.MachineUUID {
 							switch pkgname {
-							case "gala-gopher":
-								m.Gopher_version = v
-								m.Gopher_deploy = true
-								m.Gopher_installtime = d
 							case "gala-anteater":
 								m.Anteater_version = v
 								m.Anteater_deploy = true
@@ -135,7 +113,7 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 
 // 获取集群gala-ops组件运行状态
 func GetPkgRunningInfo(machines []*database.Agent, batch *common.Batch, pkgname string) ([]*database.Agent, error) {
-	// 运行状态检测自检时将未部署pkgname的机器从batch.machinesuuids数组中移除；TODO: 所有机器都进行了基础组件部署状态自检并打印了日志
+	// 运行状态检测自检时将未部署pkgname的机器从batch.machinesuuids数组中移除
 	batch_deployed := batch
 	delete_from_batch := func(mgopherdeploy bool, muuid string, b *common.Batch) *common.Batch {
 		if !mgopherdeploy {
