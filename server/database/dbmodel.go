@@ -6,7 +6,7 @@ type Agent struct {
 	IP                    string `gorm:"not null" json:"ip"`
 	Port                  string `gorm:"not null" json:"port"`
 	Department            string `json:"department"`
-	State                 bool   `gorm:"not null" json:"state"` // true:running false:not running
+	State                 int    `gorm:"not null" json:"state"` // true:running false:not running
 	Gopher_deploy         bool   // ture:installed false:uninstalled
 	Gopher_running        bool   // true:running false:not running
 	Gopher_version        string `gorm:"type:varchar(20)"`
