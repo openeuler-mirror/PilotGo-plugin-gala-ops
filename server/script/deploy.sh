@@ -58,7 +58,7 @@ COMPONENT=""
 DOCKER_HUB='hub.oepkgs.net'
 DOCKER_HUB_TAG_PREFIX="${DOCKER_HUB}/a-ops"
 
-LOCAL_DEPLOY_SRCDIR="$WORKING_DIR"
+LOCAL_DEPLOY_SRCDIR="${WORKING_DIR}"
 gopher_local_rpm=""
 GOPHER_DOCKER_TAG=""
 REMOTE_REPO_PREFIX="http://mirrors.aliyun.com/openeuler/"
@@ -72,12 +72,14 @@ PROMETHEUS_PORT=9090
 ES_PORT=9200
 ARANGODB_PORT=8529
 PYROSCOPE_PORT=4040
+NGINX_PORT=9995
 
 KAFKA_ADDR="localhost:${KAFKA_PORT}"
 PROMETHEUS_ADDR="localhost:${PROMETHEUS_PORT}"
 ES_ADDR="localhost:${ES_PORT}"
 ARANGODB_ADDR="localhost:${ARANGODB_PORT}"
 PYROSCOPE_ADDR="localhost:${PYROSCOPE_PORT}"
+NGINX_ADDR="localhost:${NGINX_PORT}"
 
 PROMETHEUS_SCRAPE_LIST=""
 
@@ -830,6 +832,57 @@ function deploy_kafka() {
     cd - >/dev/null
 }
 
+NGINX_CONF='/etc/nginx/nginx.conf'
+STATIC_SRC='/opt/PilotGo/agent/gala_deploy_middleware'
+function deploy_nginx() {
+    echo -e "[-] Deploy nginx"
+    echo -e "Installing..."
+    if ! rpm -qa | grep -q "nginx" 2>/dev/null ; then
+        install_rpm nginx
+    fi
+
+    echo -e "Configuring..."
+    \cp -f ${NGINX_CONF} "${NGINX_CONF}.bak"
+    sed -i 's/user nginx/user root/g' ${NGINX_CONF}
+    line=$(grep -n "# Settings for" ${NGINX_CONF} | cut -f1 -d':')
+    sed -i "$line,\$d" ${NGINX_CONF}
+    line=$(grep -n "server {" ${NGINX_CONF} | cut -f1 -d':')
+    sed -i "$line,\$d" ${NGINX_CONF}
+
+    cat >> ${NGINX_CONF} << EOF
+    server {
+        listen       ${NGINX_PORT};
+        listen       ${NGINX_ADDR};
+        server_name  _;
+        root         /usr/share/nginx/html;
+
+        # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+
+        error_page 404 /404.html;
+            location = /40x.html {
+        }
+
+        error_page 500 502 503 504 /50x.html;
+            location = /50x.html {
+        }
+
+        location / {
+        #alias /home/wjq/a-disk/aops-middleware;
+        root $STATIC_SRC;
+        expires max;
+        autoindex off;
+        }
+
+    }
+}
+
+EOF
+
+    echo -e "Starting..."
+    systemctl restart nginx.service || echo_err_exit "Error: fail to start nginx.service"
+}
+
 PROMETHEUS_CONF='/etc/prometheus/prometheus.yml'
 function deploy_prometheus2() {
     echo -e "[-] Deploy prometheus2"
@@ -1414,6 +1467,12 @@ shift
 
 detect_os
 case "x$COMPONENT" in
+    xnginx)
+        if [ ! -z "$2" ]; then
+            NGINX_ADDR="${2}:${NGINX_PORT}"
+        fi
+        deploy_nginx
+        ;;
     xgopher)
         parse_arg_gopher $@
         deploy_gopher
