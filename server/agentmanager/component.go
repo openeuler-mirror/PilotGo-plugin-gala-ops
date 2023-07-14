@@ -349,7 +349,7 @@ func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP strin
 				deploy_machine_uuid = agent.UUID
 				return true
 			}
-			return false
+			return true
 		})
 	default:
 		Galaops.AgentMap.Range(func(key, value any) bool {
@@ -406,7 +406,7 @@ func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP strin
 	case "nginx":
 		params = []string{"nginx", Galaops.MiddlewareDeploy.Nginx}
 	case "kafka":
-
+		params = []string{"middleware", "-K", Galaops.MiddlewareDeploy.Kafka}
 	case "arangodb":
 
 	case "prometheus":
