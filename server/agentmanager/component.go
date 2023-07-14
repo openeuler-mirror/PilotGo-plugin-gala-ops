@@ -37,13 +37,12 @@ var PluginInfo = &client.PluginInfo{
 }
 
 type Middleware struct {
-	Nginx         string
-	Kafka         string
-	Prometheus    string
-	Pyroscope     string
-	Arangodb      string
-	Elasticsearch string
-	Logstash      string
+	Nginx              string
+	Kafka              string
+	Prometheus         string
+	Pyroscope          string
+	Arangodb           string
+	ElasticandLogstash string
 }
 
 type BasicComponents struct {
@@ -339,6 +338,7 @@ func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP strin
 	var deploy_machine_uuid string
 	var deploy_machine_ip string
 	var params []string
+	var static_src string = "/opt/PilotGo/agent/gala_deploy_middleware"
 
 	switch deploy_machine_uuid = c.Query("uuid"); deploy_machine_uuid {
 	case "":
@@ -376,10 +376,8 @@ func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP strin
 			Galaops.MiddlewareDeploy.Prometheus = deploy_machine_ip
 		case "pyroscope":
 			Galaops.MiddlewareDeploy.Pyroscope = deploy_machine_ip
-		case "elasticsearch":
-			Galaops.MiddlewareDeploy.Elasticsearch = deploy_machine_ip
-		case "logstash":
-			Galaops.MiddlewareDeploy.Logstash = deploy_machine_ip
+		case "elasticandlogstash":
+			Galaops.MiddlewareDeploy.ElasticandLogstash = deploy_machine_ip
 		}
 	}
 
@@ -406,17 +404,15 @@ func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP strin
 	case "nginx":
 		params = []string{"nginx", Galaops.MiddlewareDeploy.Nginx}
 	case "kafka":
-		params = []string{"middleware", "-K", Galaops.MiddlewareDeploy.Kafka}
+		params = []string{"middleware", "-K", Galaops.MiddlewareDeploy.Kafka, "-S", static_src}
 	case "arangodb":
-
+		params = []string{"middleware", "-A", "-S", static_src}
 	case "prometheus":
 
 	case "pyroscope":
-
-	case "elasticsearch":
-
-	case "logstash":
-
+		params = []string{"middleware", "-p", "-S", static_src}
+	case "elasticandlogstash":
+		params = []string{"middleware", "-E", Galaops.MiddlewareDeploy.ElasticandLogstash, "-S", static_src}
 	}
 
 	cmdResults, err := Galaops.Sdkmethod.RunScript(batches, string(script), params)
