@@ -329,10 +329,16 @@ func (o *Opsclient) DeployStatusCheck() error {
 }
 
 /*******************************************************单机部署组件handler*******************************************************/
-func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, params []string, defaultIP string) {
+
+func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP string) {
+	// ttcode
+	fmt.Println("\033[32mc.req.headers\033[0m: ", c.Request.Header)
+	fmt.Println("\033[32mc.req.body\033[0m: ", c.Request.Body)
+
 	batches := &common.Batch{}
 	var deploy_machine_uuid string
 	var deploy_machine_ip string
+	var params []string
 
 	switch deploy_machine_uuid = c.Query("uuid"); deploy_machine_uuid {
 	case "":
@@ -394,7 +400,25 @@ func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, params []string
 		return
 	}
 
-	// params := []string{"ops", "-K", agentmanager.Galaops.MiddlewareDeploy.Kafka, "-P", agentmanager.Galaops.MiddlewareDeploy.Prometheus, "-A", agentmanager.Galaops.MiddlewareDeploy.Arangodb}
+	switch pkgname {
+	case "ops":
+		params = []string{"ops", "-K", Galaops.MiddlewareDeploy.Kafka, "-P", Galaops.MiddlewareDeploy.Prometheus, "-A", Galaops.MiddlewareDeploy.Arangodb}
+	case "nginx":
+		params = []string{"nginx", Galaops.MiddlewareDeploy.Nginx}
+	case "kafka":
+
+	case "arangodb":
+
+	case "prometheus":
+
+	case "pyroscope":
+
+	case "elasticsearch":
+
+	case "logstash":
+
+	}
+
 	cmdResults, err := Galaops.Sdkmethod.RunScript(batches, string(script), params)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{

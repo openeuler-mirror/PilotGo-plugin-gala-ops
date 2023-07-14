@@ -405,3 +405,7 @@ func UninstallOps(ctx *gin.Context) {
 		"data":   ret,
 	})
 }
+
+func InstallNginx(ctx *gin.Context) {
+	agentmanager.Galaops.SingleDeploy(ctx, "nginx", config.Config().Deploy.ServerMeta)
+}
