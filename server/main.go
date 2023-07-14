@@ -35,8 +35,7 @@ func main() {
 			Prometheus:    config.Config().Deploy.ServerMeta,
 			Pyroscope:     config.Config().Deploy.ServerMeta,
 			Arangodb:      config.Config().Deploy.ServerMeta,
-			Logstash:      config.Config().Deploy.ServerMeta,
-			Elasticsearch: config.Config().Deploy.ServerMeta,
+			ElasticandLogstash: config.Config().Deploy.ServerMeta,
 		},
 		BasicDeploy: &agentmanager.BasicComponents{
 			Spider:    config.Config().Deploy.ServerBasic,
