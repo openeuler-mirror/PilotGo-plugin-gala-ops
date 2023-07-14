@@ -1468,8 +1468,8 @@ shift
 detect_os
 case "x$COMPONENT" in
     xnginx)
-        if [ ! -z "$2" ]; then
-            NGINX_ADDR="${2}:${NGINX_PORT}"
+        if [ ! -z "$1" ]; then
+            NGINX_ADDR="${1}:${NGINX_PORT}"
         fi
         deploy_nginx
         ;;

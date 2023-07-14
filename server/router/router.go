@@ -8,8 +8,7 @@ import (
 func InitRouter(router *gin.Engine) {
 	api := router.Group("/plugin/gala-ops/api")
 	{
-		// 脚本执行结果接口
-		// api.PUT("/run_script_result", httphandler.RunScriptResult)
+
 
 		// 安装/升级/卸载gala-gopher监控终端
 		api.PUT("/install_gopher", httphandler.InstallGopher)
