@@ -19,6 +19,7 @@ import (
 	"gitee.com/openeuler/PilotGo-plugins/sdk/logger"
 	"gitee.com/openeuler/PilotGo-plugins/sdk/plugin/client"
 	"gitee.com/openeuler/PilotGo-plugins/sdk/utils/httputils"
+	"github.com/gin-gonic/gin"
 	"github.com/mitchellh/mapstructure"
 	"openeuler.org/PilotGo/gala-ops-plugin/database"
 )
@@ -36,6 +37,7 @@ var PluginInfo = &client.PluginInfo{
 }
 
 type Middleware struct {
+	Nginx         string
 	Kafka         string
 	Prometheus    string
 	Pyroscope     string
@@ -324,4 +326,109 @@ func (o *Opsclient) DeployStatusCheck() error {
 	}
 
 	return nil
+}
+
+/*******************************************************单机部署组件handler*******************************************************/
+func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, params []string, defaultIP string) {
+	batches := &common.Batch{}
+	var deploy_machine_uuid string
+	var deploy_machine_ip string
+
+	switch deploy_machine_uuid = c.Query("uuid"); deploy_machine_uuid {
+	case "":
+		deploy_machine_ip = defaultIP
+		Galaops.AgentMap.Range(func(key, value any) bool {
+			agent := value.(*database.Agent)
+			if agent.IP == deploy_machine_ip {
+				deploy_machine_uuid = agent.UUID
+				return true
+			}
+			return false
+		})
+	default:
+		Galaops.AgentMap.Range(func(key, value any) bool {
+			agent := value.(*database.Agent)
+			if agent.UUID == deploy_machine_uuid {
+				deploy_machine_ip = agent.IP
+				return true
+			}
+			return false
+		})
+
+		switch pkgname {
+		case "ops":
+			Galaops.BasicDeploy.Spider = deploy_machine_ip
+			Galaops.BasicDeploy.Anteater = deploy_machine_ip
+			Galaops.BasicDeploy.Inference = deploy_machine_ip
+		case "nginx":
+			Galaops.MiddlewareDeploy.Nginx = deploy_machine_ip
+		case "kafka":
+			Galaops.MiddlewareDeploy.Kafka = deploy_machine_ip
+		case "arangodb":
+			Galaops.MiddlewareDeploy.Arangodb = deploy_machine_ip
+		case "prometheus":
+			Galaops.MiddlewareDeploy.Prometheus = deploy_machine_ip
+		case "pyroscope":
+			Galaops.MiddlewareDeploy.Pyroscope = deploy_machine_ip
+		case "elasticsearch":
+			Galaops.MiddlewareDeploy.Elasticsearch = deploy_machine_ip
+		case "logstash":
+			Galaops.MiddlewareDeploy.Logstash = deploy_machine_ip
+		}
+	}
+
+	batches.MachineUUIDs = append(batches.MachineUUIDs, deploy_machine_uuid)
+
+	workdir, err := os.Getwd()
+	if err != nil {
+		logger.Error("Err getting current work directory: %s", err.Error())
+	}
+
+	script, err := os.ReadFile(workdir + "/script/deploy.sh")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":   -1,
+			"status": fmt.Sprintf("Err reading deploy script:%s", err),
+		})
+		logger.Error("Err reading deploy script: %s", err.Error())
+		return
+	}
+
+	// params := []string{"ops", "-K", agentmanager.Galaops.MiddlewareDeploy.Kafka, "-P", agentmanager.Galaops.MiddlewareDeploy.Prometheus, "-A", agentmanager.Galaops.MiddlewareDeploy.Arangodb}
+	cmdResults, err := Galaops.Sdkmethod.RunScript(batches, string(script), params)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":   -1,
+			"status": fmt.Sprintf("run remote script error:%s", err),
+		})
+		logger.Error("run remote script error: %s", err.Error())
+		return
+	}
+
+	ret := []interface{}{}
+	for _, result := range cmdResults {
+		d := struct {
+			MachineUUID   string
+			MachineIP     string
+			InstallStatus string
+			Error         string
+		}{
+			MachineUUID:   result.MachineUUID,
+			InstallStatus: "ok",
+			Error:         "",
+		}
+
+		if result.RetCode != 0 {
+			d.InstallStatus = "error"
+			d.Error = result.Stderr
+		}
+
+		ret = append(ret, d)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":   0,
+		"status": "ok",
+		"data":   ret,
+	})
 }

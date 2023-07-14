@@ -30,6 +30,7 @@ func main() {
 		Sdkmethod:   PluginClient,
 		PromePlugin: nil,
 		MiddlewareDeploy: &agentmanager.Middleware{
+			Nginx:         config.Config().Deploy.ServerMeta,
 			Kafka:         config.Config().Deploy.ServerMeta,
 			Prometheus:    config.Config().Deploy.ServerMeta,
 			Pyroscope:     config.Config().Deploy.ServerMeta,
