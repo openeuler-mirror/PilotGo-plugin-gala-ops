@@ -30,11 +30,11 @@ func main() {
 		Sdkmethod:   PluginClient,
 		PromePlugin: nil,
 		MiddlewareDeploy: &agentmanager.Middleware{
-			Nginx:         config.Config().Deploy.ServerMeta,
-			Kafka:         config.Config().Deploy.ServerMeta,
-			Prometheus:    config.Config().Deploy.ServerMeta,
-			Pyroscope:     config.Config().Deploy.ServerMeta,
-			Arangodb:      config.Config().Deploy.ServerMeta,
+			Nginx:              config.Config().Deploy.ServerMeta,
+			Kafka:              config.Config().Deploy.ServerMeta,
+			Prometheus:         config.Config().Deploy.ServerMeta,
+			Pyroscope:          config.Config().Deploy.ServerMeta,
+			Arangodb:           config.Config().Deploy.ServerMeta,
 			ElasticandLogstash: config.Config().Deploy.ServerMeta,
 		},
 		BasicDeploy: &agentmanager.BasicComponents{

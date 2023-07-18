@@ -750,7 +750,7 @@ function deploy_ops() {
 #=======Middleware Deployment=======#
 middleware_deploy_list=""
 function parse_arg_middleware() {
-    ARGS=`getopt -a -o K:P:E:S:Ap --long kafka:,prometheus:,elastic:,arangodb,pyroscope,srcdir: -- "$@"`
+    ARGS=`getopt -a -o K:P:E:S:N:Ap --long kafka:,prometheus:,elastic:,nginx:,arangodb,pyroscope,srcdir: -- "$@"`
     [ $? -ne 0 ] && (print_usage; exit 1)
     eval set -- "${ARGS}"
     while true
@@ -767,6 +767,9 @@ function parse_arg_middleware() {
             -E|--elastic)
                 ES_ADDR=$(addr_add_port "$2" ${ES_PORT})
                 middleware_deploy_list="${middleware_deploy_list}elasticsearch "
+                shift;;
+            -N|--nginx)
+                NGINX_ADDR=$(addr_add_port "$2" ${NGINX_PORT})
                 shift;;
             -p|--pyroscope)
                 middleware_deploy_list="${middleware_deploy_list}pyroscope "
@@ -805,8 +808,8 @@ function deploy_kafka() {
         else
             KAFKA_LOCAL_TARBALL="./${KAFKA_VERSION}.tgz"
             if [ ! -f "$KAFKA_LOCAL_TARBALL" ] ; then
-                wget https://archive.apache.org/dist/kafka/2.8.2/${KAFKA_VERSION}.tgz --no-check-certificate
-                [ $? -ne 0 ] && echo_err_exit "Error: fail to download kafka tarball from official website, check proxy!"
+                wget http://${NGINX_ADDR}/${KAFKA_VERSION}.tgz --no-check-certificate
+                [ $? -ne 0 ] && echo_err_exit "Error: fail to download kafka tarball from nginx"
             fi
         fi
         tar xzf ${KAFKA_LOCAL_TARBALL} -C /opt
