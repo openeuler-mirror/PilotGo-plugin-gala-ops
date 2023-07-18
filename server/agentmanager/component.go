@@ -338,7 +338,6 @@ func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP strin
 	var deploy_machine_uuid string
 	var deploy_machine_ip string
 	var params []string
-	var static_src string = "/opt/PilotGo/agent/gala_deploy_middleware"
 
 	switch deploy_machine_uuid = c.Query("uuid"); deploy_machine_uuid {
 	case "":
@@ -347,7 +346,6 @@ func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP strin
 			agent := value.(*database.Agent)
 			if agent.IP == deploy_machine_ip {
 				deploy_machine_uuid = agent.UUID
-				return true
 			}
 			return true
 		})
@@ -356,9 +354,8 @@ func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP strin
 			agent := value.(*database.Agent)
 			if agent.UUID == deploy_machine_uuid {
 				deploy_machine_ip = agent.IP
-				return true
 			}
-			return false
+			return true
 		})
 
 		switch pkgname {
@@ -404,15 +401,15 @@ func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP strin
 	case "nginx":
 		params = []string{"nginx", Galaops.MiddlewareDeploy.Nginx}
 	case "kafka":
-		params = []string{"middleware", "-K", Galaops.MiddlewareDeploy.Kafka, "-S", static_src}
+		params = []string{"middleware", "-K", Galaops.MiddlewareDeploy.Kafka, "-N", Galaops.MiddlewareDeploy.Nginx}
 	case "arangodb":
-		params = []string{"middleware", "-A", "-S", static_src}
+		params = []string{"middleware", "-A", "-N", Galaops.MiddlewareDeploy.Nginx}
 	case "prometheus":
 
 	case "pyroscope":
-		params = []string{"middleware", "-p", "-S", static_src}
+		params = []string{"middleware", "-p", "-N", Galaops.MiddlewareDeploy.Nginx}
 	case "elasticandlogstash":
-		params = []string{"middleware", "-E", Galaops.MiddlewareDeploy.ElasticandLogstash, "-S", static_src}
+		params = []string{"middleware", "-E", Galaops.MiddlewareDeploy.ElasticandLogstash, "-N", Galaops.MiddlewareDeploy.Nginx}
 	}
 
 	cmdResults, err := Galaops.Sdkmethod.RunScript(batches, string(script), params)
@@ -424,6 +421,9 @@ func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP strin
 		logger.Error("run remote script error: %s", err.Error())
 		return
 	}
+
+	// ttcode
+	fmt.Println("\033[32minstallkafka cmdresults\033[0m: ", cmdResults)
 
 	ret := []interface{}{}
 	for _, result := range cmdResults {
