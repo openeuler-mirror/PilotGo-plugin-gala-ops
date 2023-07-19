@@ -12,6 +12,8 @@ func InitRouter(router *gin.Engine) {
 
 		api.PUT("/install_kafka", httphandler.InstallKafka)
 
+		api.PUT("/install_arangodb", httphandler.InstallArangodb)
+
 		// 安装/升级/卸载gala-gopher监控终端
 		api.PUT("/install_gopher", httphandler.InstallGopher)
 		api.PUT("/upgrade_gopher", httphandler.UpgradeGopher)

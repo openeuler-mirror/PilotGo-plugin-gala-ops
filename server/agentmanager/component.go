@@ -422,9 +422,6 @@ func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP strin
 		return
 	}
 
-	// ttcode
-	fmt.Println("\033[32minstallkafka cmdresults\033[0m: ", cmdResults)
-
 	ret := []interface{}{}
 	for _, result := range cmdResults {
 		d := struct {
