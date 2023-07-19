@@ -852,6 +852,10 @@ function deploy_nginx() {
     line=$(grep -n "server {" ${NGINX_CONF} | cut -f1 -d':')
     sed -i "$line,\$d" ${NGINX_CONF}
 
+    # gzip on;
+    # client_max_body_size 600M;
+    # proxy_max_temp_file_size 600M;
+
     cat >> ${NGINX_CONF} << EOF
     server {
         listen       ${NGINX_PORT};
@@ -945,7 +949,16 @@ function deploy_arangodb_docker() {
     if [ "$DEPLOY_TYPE" == "local" ] ; then
         docker_load_image_file "$LOCAL_DEPLOY_SRCDIR/arangodb-${OS_ARCH}.tar"
     else
-        docker_pull_image "${arangodb_tag}"
+        # docker_pull_image "${arangodb_tag}"
+        ARANGODB_LOCAL_TARBALL="./arangodb-x86_64.tar"
+        if [ ! -f "$ARANGODB_LOCAL_TARBALL" ] ; then
+            wget http://${NGINX_ADDR}/arangodb-x86_64.tar --no-check-certificate
+            [ $? -ne 0 ] && echo_err_exit "Error: fail to download arangodb tarball from nginx"
+        fi
+        docker --version >/dev/null 2>&1  || echo_err_exit "Error: Docker cmd not found, please install docker firstly"
+        [ ! -f $ARANGODB_LOCAL_TARBALL ] && echo_err_exit "Error: failed to find local image file:" $ARANGODB_LOCAL_TARBALL
+        docker load -i  $ARANGODB_LOCAL_TARBALL
+        [ $? -ne 0 ] && echo_err_exit "Error: failed to load docker image:" $ARANGODB_LOCAL_TARBALL
     fi
 
     echo -e "Creating and running arangodb container"

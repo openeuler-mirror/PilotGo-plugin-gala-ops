@@ -413,3 +413,7 @@ func InstallNginx(ctx *gin.Context) {
 func InstallKafka(ctx *gin.Context) {
 	agentmanager.Galaops.SingleDeploy(ctx, "kafka", config.Config().Deploy.ServerMeta)
 }
+
+func InstallArangodb(ctx *gin.Context) {
+	agentmanager.Galaops.SingleDeploy(ctx, "arangodb", config.Config().Deploy.ServerMeta)
+}
