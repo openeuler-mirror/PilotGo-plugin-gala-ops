@@ -1153,7 +1153,8 @@ function deploy_pyroscope() {
     fi
 
     if which pyroscope >/dev/null; then
-        nohup pyroscope server &
+        # nohup pyroscope server &
+        systemctl restart pyroscope-server.service
         return
     fi
 
@@ -1163,15 +1164,17 @@ function deploy_pyroscope() {
     else
         PYROSCOPE_LOCAL_RPM="./pyroscope-0.37.2-1-${OS_ARCH}.rpm"
         if [ ! -f "$PYROSCOPE_LOCAL_RPM" ] ; then
-            wget https://dl.pyroscope.io/release/pyroscope-0.37.2-1-${OS_ARCH}.rpm --no-check-certificate
-            [ $? -ne 0 ] && echo_err_exit "Error: fail to download pyroscope rpm from official website, check proxy!"
+            wget http://${NGINX_ADDR}/pyroscope-0.37.2-1-${OS_ARCH}.rpm --no-check-certificate
+            [ $? -ne 0 ] && echo_err_exit "Error: fail to download pyroscope rpm from nginx"
         fi
     fi
 
     yum install ${PYROSCOPE_LOCAL_RPM} -y || echo_err_exit "Error: fail to install $PYROSCOPE_LOCAL_RPM"
 
     export PYROSCOPE_RETENTION=72h
-    nohup pyroscope server &
+    mv -f /usr/lib/pyroscope/scripts/pyroscope-server.service /usr/lib/systemd/system
+    systemctl restart pyroscope-server.service
+    # nohup pyroscope server &
 }
 
 function deploy_middleware() {
