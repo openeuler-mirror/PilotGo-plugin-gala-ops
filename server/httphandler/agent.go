@@ -417,3 +417,7 @@ func InstallKafka(ctx *gin.Context) {
 func InstallArangodb(ctx *gin.Context) {
 	agentmanager.Galaops.SingleDeploy(ctx, "arangodb", config.Config().Deploy.ServerMeta)
 }
+
+func InstallPyroscope(ctx *gin.Context) {
+	agentmanager.Galaops.SingleDeploy(ctx, "pyroscope", config.Config().Deploy.ServerMeta)
+}
