@@ -1006,14 +1006,16 @@ function deploy_elasticsearch() {
     else
         ES_LOCAL_TARBALL="./elasticsearch-8.5.3-linux-${OS_ARCH}.tar.gz"
         if [ ! -f "$ES_LOCAL_TARBALL" ] ; then
-            wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.5.3-linux-${OS_ARCH}.tar.gz --no-check-certificate
-            [ $? -ne 0 ] && echo_err_exit "Error: fail to download elasticsearch rpm from official website, check proxy!"
+            wget http://${NGINX_ADDR}/elasticsearch-8.5.3-linux-${OS_ARCH}.tar.gz --no-check-certificate
+            # wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.5.3-linux-${OS_ARCH}.tar.gz --no-check-certificate
+            [ $? -ne 0 ] && echo_err_exit "Error: fail to download elasticsearch rpm from nginx"
         fi
     fi
 
     echo -e "\n[2] Creating elasticsearch-used user/group"
-    groupadd elastic
-    useradd -g elastic elastic
+    /usr/sbin/groupadd elastic
+    /usr/sbin/useradd -g elastic elastic
+    mkdir /home/elastic && chown -R elastic:elastic /home/elastic
     \cp -f ${ES_LOCAL_TARBALL} /home/elastic
     chown elastic:elastic /home/elastic/elasticsearch-8.5.3-linux-${OS_ARCH}.tar.gz
 
@@ -1039,8 +1041,9 @@ function deploy_logstash() {
         else
             LOGSTASH_LOCAL_RPM="./logstash-8.5.3-${OS_ARCH}.rpm"
             if [ ! -f "$LOGSTASH_LOCAL_RPM" ] ; then
-                wget https://artifacts.elastic.co/downloads/logstash/logstash-8.5.3-${OS_ARCH}.rpm --no-check-certificate
-                [ $? -ne 0 ] && echo_err_exit "Error: fail to download logstash rpm from official website, check proxy!"
+                wget http://${NGINX_ADDR}/logstash-8.5.3-${OS_ARCH}.rpm --no-check-certificate
+                # wget https://artifacts.elastic.co/downloads/logstash/logstash-8.5.3-${OS_ARCH}.rpm --no-check-certificate
+                [ $? -ne 0 ] && echo_err_exit "Error: fail to download logstash rpm from nginx"
             fi
         fi
 

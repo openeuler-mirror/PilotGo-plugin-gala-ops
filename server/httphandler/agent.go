@@ -421,3 +421,7 @@ func InstallArangodb(ctx *gin.Context) {
 func InstallPyroscope(ctx *gin.Context) {
 	agentmanager.Galaops.SingleDeploy(ctx, "pyroscope", config.Config().Deploy.ServerMeta)
 }
+
+func InstallESandLogstash(ctx *gin.Context) {
+	agentmanager.Galaops.SingleDeploy(ctx, "elasticandlogstash", config.Config().Deploy.ServerMeta)
+}
