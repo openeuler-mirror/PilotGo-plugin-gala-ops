@@ -327,7 +327,7 @@ func (o *Opsclient) DeployStatusCheck() error {
 	return nil
 }
 
-/*******************************************************单机部署组件handler*******************************************************/
+/*******************************************************单机组件部署卸载handler*******************************************************/
 
 func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP string) {
 	// ttcode
@@ -437,6 +437,92 @@ func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP strin
 
 		if result.RetCode != 0 {
 			d.InstallStatus = "error"
+			d.Error = result.Stderr
+		}
+
+		ret = append(ret, d)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":   0,
+		"status": "ok",
+		"data":   ret,
+	})
+}
+
+func (o *Opsclient) SingleUninstall(c *gin.Context, pkgname string) {
+	batches := &common.Batch{}
+	var deploy_machine_uuid string
+	var deploy_machine_ip string
+	var cmd string
+
+	switch pkgname {
+	case "ops":
+		deploy_machine_ip = Galaops.BasicDeploy.Spider
+	case "nginx":
+		deploy_machine_ip = Galaops.MiddlewareDeploy.Nginx
+	case "kafka":
+		deploy_machine_ip = Galaops.MiddlewareDeploy.Kafka
+	case "arangodb":
+		deploy_machine_ip = Galaops.MiddlewareDeploy.Arangodb
+	case "prometheus":
+		deploy_machine_ip = Galaops.MiddlewareDeploy.Prometheus
+	case "pyroscope":
+		deploy_machine_ip = Galaops.MiddlewareDeploy.Pyroscope
+	case "elasticandlogstash":
+		deploy_machine_ip = Galaops.MiddlewareDeploy.ElasticandLogstash
+	}
+	Galaops.AgentMap.Range(func(key, value any) bool {
+		agent := value.(*database.Agent)
+		if agent.IP == deploy_machine_ip {
+			deploy_machine_uuid = agent.UUID
+		}
+		return true
+	})
+
+	batches.MachineUUIDs = append(batches.MachineUUIDs, deploy_machine_uuid)
+
+	switch pkgname {
+	case "ops":
+		cmd = "systemctl stop gala-spider && systemctl stop gala-anteater && systemctl stop gala-inference && yum autoremove -y gala-ops"
+	case "nginx":
+		cmd = "yum autoremove -y nginx"
+	case "kafka":
+		cmd = "/bin/bash /opt/kafka_2.13-2.8.2/bin/kafka-server-stop.sh && /bin/bash /opt/kafka_2.13-2.8.2/bin/zookeeper-server-stop.sh && rm -rf /opt/kafka_2.13-2.8.2"
+	case "arangodb":
+		cmd = "systemctl stop arangodb3.service && yum autoremove -y arangodb3"
+	case "prometheus":
+
+	case "pyroscope":
+		cmd = "kill -9 $(ps -ef | grep pyroscope | awk '{print $2}') 2> /dev/null ; yum autoremove -y gala-ops"
+	case "elasticandlogstash":
+		cmd = "kill -9 $(ps -ef | grep elasticsearch-8.5.3 | awk '{if($3==1) print $2}')  2>/dev/null ; rm -rf /home/elastic"
+	}
+
+	cmdResults, err := Galaops.Sdkmethod.RunCommand(batches, cmd)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":   -1,
+			"status": fmt.Sprintf("run remote script error:%s", err),
+		})
+		logger.Error("run remote command error: %s", err.Error())
+		return
+	}
+
+	ret := []interface{}{}
+	for _, result := range cmdResults {
+		d := struct {
+			MachineUUID   string
+			UpgradeStatus string
+			Error         string
+		}{
+			MachineUUID:   result.MachineUUID,
+			UpgradeStatus: "ok",
+			Error:         "",
+		}
+
+		if result.RetCode != 0 {
+			d.UpgradeStatus = "error"
 			d.Error = result.Stderr
 		}
 
