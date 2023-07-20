@@ -213,18 +213,16 @@ func InstallOps(ctx *gin.Context) {
 			agent := value.(*database.Agent)
 			if agent.IP == deploy_machine_ip {
 				deploy_machine_uuid = agent.UUID
-				return true
 			}
-			return false
+			return true
 		})
 	default:
 		agentmanager.Galaops.AgentMap.Range(func(key, value any) bool {
 			agent := value.(*database.Agent)
 			if agent.UUID == deploy_machine_uuid {
 				deploy_machine_ip = agent.IP
-				return true
 			}
-			return false
+			return true
 		})
 	}
 	batches.MachineUUIDs = append(batches.MachineUUIDs, deploy_machine_uuid)
@@ -299,9 +297,8 @@ func UpgradeOps(ctx *gin.Context) {
 		agent := value.(*database.Agent)
 		if agent.IP == deploy_machine_ip {
 			deploy_machine_uuid = agent.UUID
-			return true
 		}
-		return false
+		return true
 	})
 	batches.MachineUUIDs = append(batches.MachineUUIDs, deploy_machine_uuid)
 
@@ -359,9 +356,8 @@ func UninstallOps(ctx *gin.Context) {
 		agent := value.(*database.Agent)
 		if agent.IP == deploy_machine_ip {
 			deploy_machine_uuid = agent.UUID
-			return true
 		}
-		return false
+		return true
 	})
 	batches.MachineUUIDs = append(batches.MachineUUIDs, deploy_machine_uuid)
 

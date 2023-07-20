@@ -15,7 +15,7 @@ func InitRouter(router *gin.Engine) {
 		api.PUT("/install_arangodb", httphandler.InstallArangodb)
 
 		api.PUT("/install_pyroscope", httphandler.InstallPyroscope)
-		// pyroscope-server.service需要修改user group
+
 		api.PUT("/install_esandlogstash", httphandler.InstallESandLogstash)
 
 		// 安装/升级/卸载gala-gopher监控终端
