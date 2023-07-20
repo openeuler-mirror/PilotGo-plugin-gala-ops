@@ -1153,8 +1153,8 @@ function deploy_pyroscope() {
     fi
 
     if which pyroscope >/dev/null; then
-        # nohup pyroscope server &
-        systemctl restart pyroscope-server.service
+        nohup pyroscope server >> /var/log/pyroscope/pyroscope.log 2>&1 &
+        # systemctl restart pyroscope-server.service
         return
     fi
 
@@ -1172,9 +1172,9 @@ function deploy_pyroscope() {
     yum install ${PYROSCOPE_LOCAL_RPM} -y || echo_err_exit "Error: fail to install $PYROSCOPE_LOCAL_RPM"
 
     export PYROSCOPE_RETENTION=72h
-    mv -f /usr/lib/pyroscope/scripts/pyroscope-server.service /usr/lib/systemd/system
-    systemctl restart pyroscope-server.service
-    # nohup pyroscope server &
+    # mv -f /usr/lib/pyroscope/scripts/pyroscope-server.service /usr/lib/systemd/system
+    # systemctl restart pyroscope-server.service
+    nohup pyroscope server >> /var/log/pyroscope/pyroscope.log 2>&1 &
 }
 
 function deploy_middleware() {
