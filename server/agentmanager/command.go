@@ -192,6 +192,17 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 
 // 获取集群gala-ops组件运行状态
 func GetPkgRunningInfo(machines []*database.Agent, batch *common.Batch, pkgname string) ([]*database.Agent, error) {
+	var cmd string
+
+	switch pkgname {
+	case "kafka":
+		cmd = "netstat -nlutp | grep ':9092' | grep -q 'LISTEN'"
+	case "elasticsearch":
+		cmd = "netstat -nlutp | grep ':9200' | grep -q 'LISTEN'"
+	default:
+		cmd = "systemctl status " + pkgname
+	}
+
 	// 运行状态检测自检时将未部署pkgname的机器从batch.machinesuuids数组中移除
 	batch_deployed := batch
 	delete_from_batch := func(mgopherdeploy bool, muuid string, b *common.Batch) *common.Batch {
@@ -214,51 +225,121 @@ func GetPkgRunningInfo(machines []*database.Agent, batch *common.Batch, pkgname 
 			batch_deployed = delete_from_batch(m.Anteater_deploy, m.UUID, batch_deployed)
 		case "gala-inference":
 			batch_deployed = delete_from_batch(m.Inference_deploy, m.UUID, batch_deployed)
+		case "kafka":
+			batch_deployed = delete_from_batch(m.Kafka_deploy, m.UUID, batch_deployed)
+		case "elasticsearch":
+			batch_deployed = delete_from_batch(m.Elasticsearch_deploy, m.UUID, batch_deployed)
+		case "logstash":
+			batch_deployed = delete_from_batch(m.Logstash_deploy, m.UUID, batch_deployed)
+		case "pycoscope":
+			batch_deployed = delete_from_batch(m.Pyroscope_deploy, m.UUID, batch_deployed)
+		case "prometheus2":
+			batch_deployed = delete_from_batch(m.Prometheus_deploy, m.UUID, batch_deployed)
+		case "arangodb3":
+			batch_deployed = delete_from_batch(m.Arangodb_deploy, m.UUID, batch_deployed)
+		case "nginx":
+			batch_deployed = delete_from_batch(m.Nginx_deploy, m.UUID, batch_deployed)
 		}
 	}
 
-	cmdresults, err := Galaops.Sdkmethod.RunCommand(batch_deployed, "systemctl status "+pkgname)
-	if err != nil {
-		return nil, fmt.Errorf("runcommand error: %s", err)
-	}
+	cmdresults, err := Galaops.Sdkmethod.RunCommand(batch_deployed, cmd)
+	if err == nil {
+		switch pkgname {
+		case "kafka", "elasticsearch":
+			for _, result := range cmdresults {
+				if result.RetCode == 1 && result.Stdout == "" && result.Stderr == "" {
+					for _, m := range machines {
+						if m.UUID == result.MachineUUID {
+							switch pkgname {
+							case "kafka":
+								m.Kafka_running = false
+							case "elasticsearch":
+								m.Elasticsearch_running = false
+							}
+						}
+					}
+				} else if result.RetCode == 0 && result.Stdout == "" && result.Stderr == "" {
+					for _, m := range machines {
+						if m.UUID == result.MachineUUID {
+							switch pkgname {
+							case "kafka":
+								m.Kafka_running = true
+							case "elasticsearch":
+								m.Elasticsearch_running = true
+							}
+						}
+					}
+				}
+			}
+		default:
+			for _, result := range cmdresults {
+				// ttcode
+				// logger.Debug("\033[32mrunning:\033[0m IP: %s, UUID: %s, code: %d, stdo: %s, stde: %s", result.MachineIP, result.MachineUUID, result.RetCode, result.Stdout, result.Stderr)
+				if result.RetCode == 3 && strings.Contains(result.Stdout, "Active: inactive (dead)") && result.Stderr == "" {
+					for _, m := range machines {
+						if m.UUID == result.MachineUUID {
+							switch pkgname {
+							case "gala-gopher":
+								m.Gopher_running = false
+							case "gala-anteater":
+								m.Anteater_running = false
+							case "gala-inference":
+								m.Inference_running = false
+							case "gala-spider":
+								m.Spider_running = false
+							case "kafka":
+								m.Kafka_running = false
+							case "elasticsearch":
+								m.Elasticsearch_running = false
+							case "logstash":
+								m.Logstash_running = false
+							case "pycoscope":
+								m.Pyroscope_running = false
+							case "prometheus2":
+								m.Prometheus_running = false
+							case "arangodb3":
+								m.Arangodb_running = false
+							case "nginx":
+								m.Nginx_running = false
+							}
+						}
+					}
+				} else if result.RetCode == 0 && strings.Contains(result.Stdout, "Active: active (running)") && result.Stderr == "" {
+					for _, m := range machines {
+						if m.UUID == result.MachineUUID {
+							switch pkgname {
+							case "gala-gopher":
+								m.Gopher_running = true
+							case "gala-anteater":
+								m.Anteater_running = true
+							case "gala-inference":
+								m.Inference_running = true
+							case "gala-spider":
+								m.Spider_running = true
+							case "kafka":
+								m.Kafka_running = true
+							case "elasticsearch":
+								m.Elasticsearch_running = true
+							case "logstash":
+								m.Logstash_running = true
+							case "pycoscope":
+								m.Pyroscope_running = true
+							case "prometheus2":
+								m.Prometheus_running = true
+							case "arangodb3":
+								m.Arangodb_running = true
+							case "nginx":
+								m.Nginx_running = true
+							}
+						}
+					}
+				} else {
+					logger.Error("Err getting running status in getpkgrunninginfo: %s, %s", pkgname, result)
+				}
+			}
 
-	for _, result := range cmdresults {
-		// ttcode
-		// logger.Debug("\033[32mrunning:\033[0m IP: %s, UUID: %s, code: %d, stdo: %s, stde: %s", result.MachineIP, result.MachineUUID, result.RetCode, result.Stdout, result.Stderr)
-		if result.RetCode == 3 && strings.Contains(result.Stdout, "Active: inactive (dead)") && result.Stderr == "" {
-			for _, m := range machines {
-				if m.UUID == result.MachineUUID {
-					switch pkgname {
-					case "gala-gopher":
-						m.Gopher_running = false
-					case "gala-anteater":
-						m.Anteater_running = false
-					case "gala-inference":
-						m.Inference_running = false
-					case "gala-spider":
-						m.Spider_running = false
-					}
-				}
-			}
-		} else if result.RetCode == 0 && strings.Contains(result.Stdout, "Active: active (running)") && result.Stderr == "" {
-			for _, m := range machines {
-				if m.UUID == result.MachineUUID {
-					switch pkgname {
-					case "gala-gopher":
-						m.Gopher_running = true
-					case "gala-anteater":
-						m.Anteater_running = true
-					case "gala-inference":
-						m.Inference_running = true
-					case "gala-spider":
-						m.Spider_running = true
-					}
-				}
-			}
-		} else {
-			logger.Error("Err getting running status in getpkgrunninginfo: %s, %s", pkgname, result)
+			return machines, nil
 		}
 	}
-
-	return machines, nil
+	return nil, fmt.Errorf("runcommand error: %s", err)
 }
