@@ -37,12 +37,13 @@ var PluginInfo = &client.PluginInfo{
 }
 
 type Middleware struct {
-	Nginx              string
-	Kafka              string
-	Prometheus         string
-	Pyroscope          string
-	Arangodb           string
-	ElasticandLogstash string
+	Nginx         string
+	Kafka         string
+	Prometheus    string
+	Pyroscope     string
+	Arangodb      string
+	Elasticsearch string
+	Logstash      string
 }
 
 type BasicComponents struct {
@@ -254,7 +255,7 @@ func (o *Opsclient) DeployStatusCheck() error {
 
 	// 检查prometheus插件是否在运行
 	logger.Debug("***prometheus plugin running check***")
-	promepluginstatus, _ := Galaops.CheckPrometheusPlugin()
+	promepluginstatus, _ := o.CheckPrometheusPlugin()
 	if !promepluginstatus {
 		logger.Error("***prometheus plugin is not running***")
 	}
@@ -269,6 +270,7 @@ func (o *Opsclient) DeployStatusCheck() error {
 	// TODO: 自检部分添加各组件部署情况检测，更新opsclient中的middlewaredeploy和basicdeploy
 	// 获取业务机集群gala-ops基础组件安装部署运行信息
 	logger.Debug("***basic components deploy status check***")
+
 	machines, err = GetPkgDeployInfo(machines, batch, "gala-gopher")
 	if err != nil {
 		logger.Error("gala-gopher deploy check failed: %s", err.Error())
@@ -374,7 +376,7 @@ func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP strin
 		case "pyroscope":
 			Galaops.MiddlewareDeploy.Pyroscope = deploy_machine_ip
 		case "elasticandlogstash":
-			Galaops.MiddlewareDeploy.ElasticandLogstash = deploy_machine_ip
+			Galaops.MiddlewareDeploy.Elasticsearch = deploy_machine_ip
 		}
 	}
 
@@ -409,7 +411,7 @@ func (o *Opsclient) SingleDeploy(c *gin.Context, pkgname string, defaultIP strin
 	case "pyroscope":
 		params = []string{"middleware", "-p", "-N", Galaops.MiddlewareDeploy.Nginx}
 	case "elasticandlogstash":
-		params = []string{"middleware", "-E", Galaops.MiddlewareDeploy.ElasticandLogstash, "-N", Galaops.MiddlewareDeploy.Nginx}
+		params = []string{"middleware", "-E", Galaops.MiddlewareDeploy.Elasticsearch, "-N", Galaops.MiddlewareDeploy.Nginx}
 	}
 
 	cmdResults, err := Galaops.Sdkmethod.RunScript(batches, string(script), params)
@@ -470,7 +472,7 @@ func (o *Opsclient) SingleUninstall(c *gin.Context, pkgname string) {
 	case "pyroscope":
 		deploy_machine_ip = Galaops.MiddlewareDeploy.Pyroscope
 	case "elasticandlogstash":
-		deploy_machine_ip = Galaops.MiddlewareDeploy.ElasticandLogstash
+		deploy_machine_ip = Galaops.MiddlewareDeploy.Elasticsearch
 	}
 	Galaops.AgentMap.Range(func(key, value any) bool {
 		agent := value.(*database.Agent)
