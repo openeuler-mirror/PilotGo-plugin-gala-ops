@@ -12,7 +12,19 @@ import (
 
 // 获取集群gala-ops组件部署信息
 func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname string) ([]*database.Agent, error) {
-	cmdresults, err := Galaops.Sdkmethod.RunCommand(batch, "rpm -qi "+pkgname)
+	deploy_machine := []map[string]string{}
+	var cmd string
+
+	switch pkgname {
+	case "kafka":
+		cmd = "ls /opt/kafka*"
+	case "elasticsearch":
+		cmd = "ls /home/elastic/elasticsearch*"
+	default:
+		cmd = "rpm -qi " + pkgname
+	}
+
+	cmdresults, err := Galaops.Sdkmethod.RunCommand(batch, cmd)
 	if err == nil {
 		switch pkgname {
 		case "gala-gopher":
@@ -49,8 +61,52 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 				}
 			}
 			return machines, nil
-		case "gala-spider", "gala-anteater", "gala-inference":
-			deploy_machine := []map[string]string{}
+		case "kafka", "elasticsearch":
+			for _, result := range cmdresults {
+				if result.RetCode == 2 && result.Stdout == "" && strings.Contains(result.Stderr, "No such file or directory") {
+					continue
+				} else if result.RetCode == 0 && len(result.Stdout) > 0 && result.Stderr == "" {
+					reader1 := strings.NewReader(result.Stdout)
+					v, err := utils.ReadInfo(reader1, `^Version.*`)
+					if err != nil && len(v) != 0 {
+						logger.Error("failed to read RPM package version when running getpkgdeployinfo: %s, %s, %s", result.MachineUUID, result.MachineIP, result.Stderr)
+						continue
+					}
+					reader2 := strings.NewReader(result.Stdout)
+					d, err := utils.ReadInfo(reader2, `^Install Date.*`)
+					if err != nil && len(d) != 0 {
+						logger.Error("failed to read RPM package install date when running getpkgdeployinfo: %s, %s, %s", result.MachineUUID, result.MachineIP, result.Stderr)
+					}
+
+					for _, m := range machines {
+						if m.UUID == result.MachineUUID {
+							switch pkgname {
+							case "kafka":
+								m.Kafka_version = v
+								m.Kafka_deploy = true
+								m.Kafka_installtime = d
+								Galaops.MiddlewareDeploy.Kafka = m.IP
+							case "elasticsearch":
+								m.Elasticsearch_version = v
+								m.Elasticsearch_deploy = true
+								m.Elasticsearch_installtime = d
+								Galaops.MiddlewareDeploy.Elasticsearch = m.IP
+							}
+						}
+					}
+					deploy_machine = append(deploy_machine, map[string]string{"ip": result.MachineIP, "uuid": result.MachineUUID})
+				} else {
+					logger.Error("failed to run command: ls kafka/elasticsearch in %s, %s, %s when running getpkgdeployinfo", result.MachineUUID, result.MachineIP, result.Stderr)
+					continue
+				}
+			}
+			if len(deploy_machine) == 0 {
+				logger.Error("%s not deployed in any machine", pkgname)
+				return machines, nil
+			}
+			logger.Debug("%s is deployed on %v", pkgname, deploy_machine)
+			return machines, nil
+		default:
 			for _, result := range cmdresults {
 				if result.RetCode == 1 && strings.Contains(result.Stdout, "is not installed") && result.Stderr == "" {
 					// logger.Error("%s not installed in the process of running getpkgdeployinfo: %s, %s, %s; ", pkgname, result.MachineUUID, result.MachineIP, result.Stderr)
@@ -89,6 +145,31 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 								m.Spider_deploy = true
 								m.Spider_installtime = d
 								Galaops.BasicDeploy.Spider = m.IP
+							case "arangodb3":
+								m.Arangodb_version = v
+								m.Arangodb_deploy = true
+								m.Arangodb_installtime = d
+								Galaops.MiddlewareDeploy.Arangodb = m.IP
+							case "pyroscope":
+								m.Pyroscope_version = v
+								m.Pyroscope_deploy = true
+								m.Pyroscope_installtime = d
+								Galaops.MiddlewareDeploy.Pyroscope = m.IP
+							case "prometheus2":
+								m.Prometheus_version = v
+								m.Prometheus_deploy = true
+								m.Prometheus_installtime = d
+								Galaops.MiddlewareDeploy.Prometheus = m.IP
+							case "logstash":
+								m.Logstash_version = v
+								m.Logstash_deploy = true
+								m.Logstash_installtime = d
+								Galaops.MiddlewareDeploy.Logstash = m.IP
+							case "nginx":
+								m.Nginx_version = v
+								m.Nginx_deploy = true
+								m.Nginx_installtime = d
+								Galaops.MiddlewareDeploy.Nginx = m.IP
 							}
 						}
 					}
@@ -103,8 +184,6 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 				return machines, nil
 			}
 			logger.Debug("%s is deployed on %v", pkgname, deploy_machine)
-			return machines, nil
-		case "kafka", "arangodb", "prometheus", "pyroscope", "elasticsearch", "logstash":
 			return machines, nil
 		}
 	}
