@@ -271,6 +271,78 @@ func (o *Opsclient) DeployStatusCheck() error {
 	// 获取业务机集群gala-ops基础组件安装部署运行信息
 	logger.Debug("***basic components deploy status check***")
 
+	// components := []string{"nginx", "kafka", "elasticsearch", "pyroscope", "prometheus2", "logstash", "arangodb3", "gala-gopher", "gala-spider", "gala-anteater", "gala-inference"}
+	// for _, c := range components {
+	// 	machines, err = GetPkgDeployInfo(machines, batch, c)
+	// 	if err != nil {
+	// 		logger.Error("%s deploy check failed: %s", c, err.Error())
+	// 	}
+	// 	machines, err = GetPkgRunningInfo(machines, batch, c)
+	// 	if err != nil {
+	// 		logger.Error("%s running status check failed: %s", c, err.Error())
+	// 	}
+	// }
+
+	// ttcode
+	fmt.Println("\033[32mbatch before\033[0m: ", batch)
+
+	machines, err = GetPkgDeployInfo(machines, batch, "kafka")
+	if err != nil {
+		logger.Error("kafka deploy check failed: %s", err.Error())
+	}
+	machines, err = GetPkgRunningInfo(machines, batch, "kafka")
+	if err != nil {
+		logger.Error("kafka running status check failed: %s", err.Error())
+	}
+
+	// ttcode
+	fmt.Println("\033[32mbatch before\033[0m: ", batch)
+
+	machines, err = GetPkgDeployInfo(machines, batch, "elasticsearch")
+	if err != nil {
+		logger.Error("elasticsearch deploy check failed: %s", err.Error())
+	}
+	machines, err = GetPkgRunningInfo(machines, batch, "elasticsearch")
+	if err != nil {
+		logger.Error("elasticsearch running status check failed: %s", err.Error())
+	}
+
+	machines, err = GetPkgDeployInfo(machines, batch, "pyroscope")
+	if err != nil {
+		logger.Error("pyroscope deploy check failed: %s", err.Error())
+	}
+	machines, err = GetPkgRunningInfo(machines, batch, "pyroscope")
+	if err != nil {
+		logger.Error("pyroscope running status check failed: %s", err.Error())
+	}
+
+	machines, err = GetPkgDeployInfo(machines, batch, "prometheus2")
+	if err != nil {
+		logger.Error("prometheus2 deploy check failed: %s", err.Error())
+	}
+	machines, err = GetPkgRunningInfo(machines, batch, "prometheus2")
+	if err != nil {
+		logger.Error("prometheus2 running status check failed: %s", err.Error())
+	}
+
+	machines, err = GetPkgDeployInfo(machines, batch, "logstash")
+	if err != nil {
+		logger.Error("logstash deploy check failed: %s", err.Error())
+	}
+	machines, err = GetPkgRunningInfo(machines, batch, "logstash")
+	if err != nil {
+		logger.Error("logstash running status check failed: %s", err.Error())
+	}
+
+	machines, err = GetPkgDeployInfo(machines, batch, "arangodb3")
+	if err != nil {
+		logger.Error("arangodb3 deploy check failed: %s", err.Error())
+	}
+	machines, err = GetPkgRunningInfo(machines, batch, "arangodb3")
+	if err != nil {
+		logger.Error("arangodb3 running status check failed: %s", err.Error())
+	}
+
 	machines, err = GetPkgDeployInfo(machines, batch, "gala-gopher")
 	if err != nil {
 		logger.Error("gala-gopher deploy check failed: %s", err.Error())
@@ -279,6 +351,7 @@ func (o *Opsclient) DeployStatusCheck() error {
 	if err != nil {
 		logger.Error("gala-gopher running status check failed: %s", err.Error())
 	}
+
 	machines, err = GetPkgDeployInfo(machines, batch, "gala-spider")
 	if err != nil {
 		logger.Error("gala-spider deploy check failed: %s", err.Error())
@@ -287,6 +360,7 @@ func (o *Opsclient) DeployStatusCheck() error {
 	if err != nil {
 		logger.Error("gala-spider running status check failed: %s", err.Error())
 	}
+
 	machines, err = GetPkgDeployInfo(machines, batch, "gala-anteater")
 	if err != nil {
 		logger.Error("gala-anteater deploy check failed: %s", err.Error())
@@ -295,6 +369,7 @@ func (o *Opsclient) DeployStatusCheck() error {
 	if err != nil {
 		logger.Error("gala-anteater running status check failed: %s", err.Error())
 	}
+
 	machines, err = GetPkgDeployInfo(machines, batch, "gala-inference")
 	if err != nil {
 		logger.Error("gala-inference deploy check failed: %s", err.Error())
@@ -303,6 +378,22 @@ func (o *Opsclient) DeployStatusCheck() error {
 	if err != nil {
 		logger.Error("gala-inference running status check failed: %s", err.Error())
 	}
+
+	// ttcode
+	fmt.Println("\033[32mbatch before\033[0m: ", batch)
+
+	machines, err = GetPkgDeployInfo(machines, batch, "nginx")
+	if err != nil {
+		logger.Error("nginx deploy check failed: %s", err.Error())
+	}
+	machines, err = GetPkgRunningInfo(machines, batch, "nginx")
+	if err != nil {
+		logger.Error("nginx running status check failed: %s", err.Error())
+	}
+
+	// ttcode
+	fmt.Println("\033[32mbatch before\033[0m: ", batch)
+
 	logger.Debug("***basic components deploy status check down***")
 
 	logger.Debug("***plugin self-check down***")
