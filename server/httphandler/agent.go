@@ -430,6 +430,10 @@ func InstallPyroscope(ctx *gin.Context) {
 	agentmanager.Galaops.SingleDeploy(ctx, "pyroscope", config.Config().Deploy.ServerMeta)
 }
 
+func UninstallPyroscope(ctx *gin.Context) {
+	agentmanager.Galaops.SingleUninstall(ctx, "pyroscope")
+}
+
 func InstallESandLogstash(ctx *gin.Context) {
 	agentmanager.Galaops.SingleDeploy(ctx, "elasticandlogstash", config.Config().Deploy.ServerMeta)
 }
