@@ -406,6 +406,10 @@ func InstallNginx(ctx *gin.Context) {
 	agentmanager.Galaops.SingleDeploy(ctx, "nginx", config.Config().Deploy.ServerMeta)
 }
 
+func UninstallNginx(ctx *gin.Context) {
+	agentmanager.Galaops.SingleUninstall(ctx, "nginx")
+}
+
 func InstallKafka(ctx *gin.Context) {
 	agentmanager.Galaops.SingleDeploy(ctx, "kafka", config.Config().Deploy.ServerMeta)
 }
