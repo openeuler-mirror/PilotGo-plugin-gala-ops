@@ -12,6 +12,7 @@ import (
 
 // 获取集群gala-ops组件部署信息
 func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname string) ([]*database.Agent, error) {
+	batch_deployed := *batch
 	deploy_machine := []map[string]string{}
 	var cmd string
 
@@ -24,7 +25,7 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 		cmd = "rpm -qi " + pkgname
 	}
 
-	cmdresults, err := Galaops.Sdkmethod.RunCommand(batch, cmd)
+	cmdresults, err := Galaops.Sdkmethod.RunCommand(&batch_deployed, cmd)
 	if err == nil {
 		switch pkgname {
 		case "gala-gopher":
@@ -66,30 +67,30 @@ func GetPkgDeployInfo(machines []*database.Agent, batch *common.Batch, pkgname s
 				if result.RetCode == 2 && result.Stdout == "" && strings.Contains(result.Stderr, "No such file or directory") {
 					continue
 				} else if result.RetCode == 0 && len(result.Stdout) > 0 && result.Stderr == "" {
-					reader1 := strings.NewReader(result.Stdout)
-					v, err := utils.ReadInfo(reader1, `^Version.*`)
-					if err != nil && len(v) != 0 {
-						logger.Error("failed to read RPM package version when running getpkgdeployinfo: %s, %s, %s", result.MachineUUID, result.MachineIP, result.Stderr)
-						continue
-					}
-					reader2 := strings.NewReader(result.Stdout)
-					d, err := utils.ReadInfo(reader2, `^Install Date.*`)
-					if err != nil && len(d) != 0 {
-						logger.Error("failed to read RPM package install date when running getpkgdeployinfo: %s, %s, %s", result.MachineUUID, result.MachineIP, result.Stderr)
-					}
+					// reader1 := strings.NewReader(result.Stdout)
+					// v, err := utils.ReadInfo(reader1, `^Version.*`)
+					// if err != nil && len(v) != 0 {
+					// 	logger.Error("failed to read RPM package version when running getpkgdeployinfo: %s, %s, %s", result.MachineUUID, result.MachineIP, result.Stderr)
+					// 	continue
+					// }
+					// reader2 := strings.NewReader(result.Stdout)
+					// d, err := utils.ReadInfo(reader2, `^Install Date.*`)
+					// if err != nil && len(d) != 0 {
+					// 	logger.Error("failed to read RPM package install date when running getpkgdeployinfo: %s, %s, %s", result.MachineUUID, result.MachineIP, result.Stderr)
+					// }
 
 					for _, m := range machines {
 						if m.UUID == result.MachineUUID {
 							switch pkgname {
 							case "kafka":
-								m.Kafka_version = v
+								// m.Kafka_version = v
 								m.Kafka_deploy = true
-								m.Kafka_installtime = d
+								// m.Kafka_installtime = d
 								Galaops.MiddlewareDeploy.Kafka = m.IP
 							case "elasticsearch":
-								m.Elasticsearch_version = v
+								// m.Elasticsearch_version = v
 								m.Elasticsearch_deploy = true
-								m.Elasticsearch_installtime = d
+								// m.Elasticsearch_installtime = d
 								Galaops.MiddlewareDeploy.Elasticsearch = m.IP
 							}
 						}
@@ -199,17 +200,21 @@ func GetPkgRunningInfo(machines []*database.Agent, batch *common.Batch, pkgname 
 		cmd = "netstat -nlutp | grep ':9092' | grep -q 'LISTEN'"
 	case "elasticsearch":
 		cmd = "netstat -nlutp | grep ':9200' | grep -q 'LISTEN'"
+	case "pyroscope":
+		cmd = "netstat -nlutp | grep ':4040' | grep -q 'LISTEN'"
+	case "prometheus2":
+		cmd = "systemctl status prometheus.service"
 	default:
 		cmd = "systemctl status " + pkgname
 	}
 
 	// 运行状态检测自检时将未部署pkgname的机器从batch.machinesuuids数组中移除
-	batch_deployed := batch
-	delete_from_batch := func(mgopherdeploy bool, muuid string, b *common.Batch) *common.Batch {
+	batch_deployed := *batch
+	delete_from_batch := func(mgopherdeploy bool, muuid string, b common.Batch) common.Batch {
 		if !mgopherdeploy {
 			for i, bm := range b.MachineUUIDs {
 				if muuid == bm {
-					copy(b.MachineUUIDs[i:], b.MachineUUIDs[i+1:])
+					b.MachineUUIDs = append(b.MachineUUIDs[:i], b.MachineUUIDs[i+1:]...)
 				}
 			}
 		}
@@ -242,10 +247,10 @@ func GetPkgRunningInfo(machines []*database.Agent, batch *common.Batch, pkgname 
 		}
 	}
 
-	cmdresults, err := Galaops.Sdkmethod.RunCommand(batch_deployed, cmd)
+	cmdresults, err := Galaops.Sdkmethod.RunCommand(&batch_deployed, cmd)
 	if err == nil {
 		switch pkgname {
-		case "kafka", "elasticsearch":
+		case "kafka", "elasticsearch", "pyroscope":
 			for _, result := range cmdresults {
 				if result.RetCode == 1 && result.Stdout == "" && result.Stderr == "" {
 					for _, m := range machines {
@@ -255,6 +260,8 @@ func GetPkgRunningInfo(machines []*database.Agent, batch *common.Batch, pkgname 
 								m.Kafka_running = false
 							case "elasticsearch":
 								m.Elasticsearch_running = false
+							case "pyroscope":
+								m.Pyroscope_running = false
 							}
 						}
 					}
@@ -266,11 +273,16 @@ func GetPkgRunningInfo(machines []*database.Agent, batch *common.Batch, pkgname 
 								m.Kafka_running = true
 							case "elasticsearch":
 								m.Elasticsearch_running = true
+							case "pyroscope":
+								m.Pyroscope_running = true
 							}
 						}
 					}
+				} else {
+					logger.Error("Err getting running status in getpkgrunninginfo: %s, %s", pkgname, result)
 				}
 			}
+			return machines, nil
 		default:
 			for _, result := range cmdresults {
 				// ttcode
@@ -293,8 +305,6 @@ func GetPkgRunningInfo(machines []*database.Agent, batch *common.Batch, pkgname 
 								m.Elasticsearch_running = false
 							case "logstash":
 								m.Logstash_running = false
-							case "pycoscope":
-								m.Pyroscope_running = false
 							case "prometheus2":
 								m.Prometheus_running = false
 							case "arangodb3":
@@ -322,8 +332,6 @@ func GetPkgRunningInfo(machines []*database.Agent, batch *common.Batch, pkgname 
 								m.Elasticsearch_running = true
 							case "logstash":
 								m.Logstash_running = true
-							case "pycoscope":
-								m.Pyroscope_running = true
 							case "prometheus2":
 								m.Prometheus_running = true
 							case "arangodb3":
@@ -337,7 +345,6 @@ func GetPkgRunningInfo(machines []*database.Agent, batch *common.Batch, pkgname 
 					logger.Error("Err getting running status in getpkgrunninginfo: %s, %s", pkgname, result)
 				}
 			}
-
 			return machines, nil
 		}
 	}
