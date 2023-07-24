@@ -381,7 +381,7 @@ func (o *Opsclient) DeployStatusCheck() error {
 
 	// ttcode
 	fmt.Println("\033[32mbatch before\033[0m: ", batch)
-
+	// TODO: nginx自检完成会改变batch
 	machines, err = GetPkgDeployInfo(machines, batch, "nginx")
 	if err != nil {
 		logger.Error("nginx deploy check failed: %s", err.Error())
