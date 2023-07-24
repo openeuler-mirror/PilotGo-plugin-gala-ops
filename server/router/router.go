@@ -9,15 +9,16 @@ func InitRouter(router *gin.Engine) {
 	api := router.Group("/plugin/gala-ops/api")
 	{
 		api.PUT("/install_nginx", httphandler.InstallNginx)
-		api.PUT("/uninstall_nginx", httphandler.UninstallNginx)
+		api.DELETE("/uninstall_nginx", httphandler.UninstallNginx)
 
 		api.PUT("/install_kafka", httphandler.InstallKafka)
-		api.PUT("/uninstall_kafka", httphandler.UninstallKafka)
+		api.DELETE("/uninstall_kafka", httphandler.UninstallKafka)
 
 		api.PUT("/install_arangodb", httphandler.InstallArangodb)
-		api.PUT("/uninstal_arangodb", httphandler.UninstallArangodb)
+		api.DELETE("/uninstal_arangodb", httphandler.UninstallArangodb)
 
 		api.PUT("/install_pyroscope", httphandler.InstallPyroscope)
+		api.DELETE("/uninstall_pyroscope", httphandler.UninstallPyroscope)
 
 		api.PUT("/install_esandlogstash", httphandler.InstallESandLogstash)
 
