@@ -579,7 +579,7 @@ func (o *Opsclient) SingleUninstall(c *gin.Context, pkgname string) {
 	case "ops":
 		cmd = "systemctl stop gala-spider && systemctl stop gala-anteater && systemctl stop gala-inference && yum autoremove -y gala-ops"
 	case "nginx":
-		cmd = "yum autoremove -y nginx"
+		cmd = "systemctl stop nginx.service && yum autoremove -y nginx"
 	case "kafka":
 		cmd = "/bin/bash /opt/kafka_2.13-2.8.2/bin/kafka-server-stop.sh && /bin/bash /opt/kafka_2.13-2.8.2/bin/zookeeper-server-stop.sh && rm -rf /opt/kafka_2.13-2.8.2"
 	case "arangodb":
@@ -587,7 +587,7 @@ func (o *Opsclient) SingleUninstall(c *gin.Context, pkgname string) {
 	case "prometheus":
 
 	case "pyroscope":
-		cmd = "kill -9 $(ps -ef | grep pyroscope | awk '{print $2}') 2> /dev/null ; yum autoremove -y gala-ops"
+		cmd = "kill -9 $(ps -ef | grep pyroscope | awk '{print $2}') 2> /dev/null ; yum autoremove -y pyroscope"
 	case "elasticandlogstash":
 		cmd = "kill -9 $(ps -ef | grep elasticsearch-8.5.3 | awk '{if($3==1) print $2}')  2>/dev/null ; rm -rf /home/elastic"
 	}
