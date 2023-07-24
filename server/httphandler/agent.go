@@ -422,6 +422,10 @@ func InstallArangodb(ctx *gin.Context) {
 	agentmanager.Galaops.SingleDeploy(ctx, "arangodb", config.Config().Deploy.ServerMeta)
 }
 
+func UninstallArangodb(ctx *gin.Context) {
+	agentmanager.Galaops.SingleUninstall(ctx, "arangodb")
+}
+
 func InstallPyroscope(ctx *gin.Context) {
 	agentmanager.Galaops.SingleDeploy(ctx, "pyroscope", config.Config().Deploy.ServerMeta)
 }
