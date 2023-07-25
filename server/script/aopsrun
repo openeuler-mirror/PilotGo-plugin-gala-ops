@@ -43,7 +43,7 @@ ES_PORT=9200
 ARANGODB_PORT=8529
 PYROSCOPE_PORT=4040
 
-AOPSRUN_LOG="/var/log/aopsrun.log"
+AOPSRUN_LOG="/var/log/arangodb2es.log"
 HOST_IP="192.168.75.132"
 KAFKA_ADDR="${HOST_IP}:${KAFKA_PORT}"
 PROMETHEUS_ADDR="${HOST_IP}:${PROMETHEUS_PORT}"
@@ -85,6 +85,9 @@ function docker_pull_image() {
     docker pull ${DOCKER_HUB_TAG_PREFIX}/"${tag_name}"
     [ $? -ne 0 ] && echo_err_exit "Error: failed to pull docker image:" $tag_name
 }
+
+echo -e "\e[32m sync time \e[0m"
+	ntpdate ntp1.aliyun.com
 
 echo -e "\e[32m [1]boot kafka \e[0m"
 	KAFKA_WORKDIR='/opt/kafka/'
@@ -231,7 +234,7 @@ echo -e "\e[32m [8]boot grafana \e[0m"
 	# Running daemon that transfrom arangodb to es
 	kill -9 $(ps -ef | grep arangodb2es.py | grep -v grep | awk '{print $2}')  2>/dev/null
 	sleep 30
-	python3 /opt/grafana/arangodb2es.py > /dev/null 2> ${AOPSRUN_LOG} &
+	python3 /opt/grafana/arangodb2es.py > ${AOPSRUN_LOG} 2>&1 &
 
 echo -e "\e[32m [10]boot opengauss \e[0m"
 	OPNEGAUSS_DEPLOY_SCRIPT='/opt/a-ops-tools-master/opengauss/create_master_slave.sh'
@@ -258,5 +261,4 @@ echo -e "\e[32m [10]boot opengauss \e[0m"
 	docker exec -it ${container_id} /bin/bash -c  "su - omm -c \"gsql -f ~/tmp.gsql >/dev/null\""
 
 
-echo -e "\e[32m [10]sync time \e[0m"
-	ntpdate ntp1.aliyun.com
+
