@@ -437,3 +437,7 @@ func UninstallPyroscope(ctx *gin.Context) {
 func InstallESandLogstash(ctx *gin.Context) {
 	agentmanager.Galaops.SingleDeploy(ctx, "elasticandlogstash", config.Config().Deploy.ServerMeta)
 }
+
+func UninstallESandLogstash(ctx *gin.Context) {
+	agentmanager.Galaops.SingleUninstall(ctx, "elasticandlogstash")
+}
