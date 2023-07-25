@@ -92,9 +92,15 @@ echo -e "\e[32m [1]boot kafka \e[0m"
 	./bin/kafka-server-stop.sh
 	./bin/zookeeper-server-stop.sh
 	./bin/zookeeper-server-start.sh config/zookeeper.properties >/dev/null 2>&1 &
-	sleep 30
+	i=0
+	while ! netstat -tunpl | grep ':2181' | grep -q 'LISTEN' ; do
+		sleep 5
+		let i+=5
+		if [ $i -ge 60 ] ; then
+			echo_err_exit "Fail to start zookeeper, aborting"
+		fi
+	done
 	./bin/kafka-server-start.sh config/server.properties >/dev/null 2>&1 &
-	sleep 10
 	cd - >/dev/null
 
 echo -e "\e[32m [2]boot prometheus \e[0m"
