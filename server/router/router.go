@@ -21,6 +21,7 @@ func InitRouter(router *gin.Engine) {
 		api.DELETE("/uninstall_pyroscope", httphandler.UninstallPyroscope)
 
 		api.PUT("/install_esandlogstash", httphandler.InstallESandLogstash)
+		api.PUT("/uninstall_esandlogstash", httphandler.UninstallESandLogstash)
 
 		// 安装/升级/卸载gala-gopher监控终端
 		api.PUT("/install_gopher", httphandler.InstallGopher)
